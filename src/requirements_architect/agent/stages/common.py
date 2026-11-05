@@ -11,9 +11,11 @@ from requirements_architect.agent.prompt_loader import load_prompt, wrap_untrust
 from requirements_architect.llm.gateway import LLMGateway
 from requirements_architect.llm.types import LLMRequest, Message
 from requirements_architect.schemas.architecture import ArchitectureSpec
+from requirements_architect.schemas.dataapi import DataApiSpec
 from requirements_architect.schemas.requirements import RequirementsSpec
 from requirements_architect.schemas.research import ResearchReport
 from requirements_architect.schemas.state import ClarificationAnswer, ProjectBrief
+from requirements_architect.schemas.technology import TechnologySpec
 
 
 @dataclass(frozen=True)
@@ -135,3 +137,22 @@ async def run_stage[T: BaseModel](
     )
     obj, _ = await gateway.complete_structured(request, schema)
     return obj
+
+
+def render_technology(spec: object) -> str:
+    if not isinstance(spec, TechnologySpec):
+        return "(none)"
+    return "\n".join(f"{t.id} {t.name} ({t.category.value})" for t in spec.technologies) or "(none)"
+
+
+def render_data_api(spec: object) -> str:
+    if not isinstance(spec, DataApiSpec):
+        return "(none)"
+    lines = [f"{e.id} {e.name}: {', '.join(f.name for f in e.fields)}" for e in spec.entities]
+    lines += [
+        f"{p.id} {p.method.value} {p.path} (auth: {p.authentication.value}): {p.purpose[:120]}"
+        for p in spec.endpoints
+    ]
+    if spec.interface_note:
+        lines.append(f"interface: {spec.interface_note[:300]}")
+    return "\n".join(lines) or "(none)"

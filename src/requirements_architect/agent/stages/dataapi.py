@@ -9,6 +9,7 @@ from requirements_architect.agent.stages.common import (
     StageContext,
     base_untrusted,
     render_architecture,
+    render_technology,
     run_stage,
 )
 from requirements_architect.generators import mermaid
@@ -24,7 +25,6 @@ from requirements_architect.schemas.dataapi import (
     RawDataApi,
 )
 from requirements_architect.schemas.requirements import RequirementsSpec, Severity, SpecIssue
-from requirements_architect.schemas.technology import TechnologySpec
 
 _PATH_OK = re.compile(r"^/[A-Za-z0-9._~\-/{}]*$")
 _MUTATING = {HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH, HttpMethod.DELETE}
@@ -298,12 +298,7 @@ def build_data_api(
 
 
 async def generate_data_api(gateway: LLMGateway, ctx: StageContext) -> DataApiSpec:
-    tech = ctx.extras.get("technology")
-    tech_txt = (
-        "\n".join(f"{t.id} {t.name} ({t.category.value})" for t in tech.technologies)
-        if isinstance(tech, TechnologySpec)
-        else "(none)"
-    )
+    tech_txt = render_technology(ctx.extras.get("technology"))
     untrusted = base_untrusted(ctx) | {
         "architecture": render_architecture(ctx.architecture),
         "technology": tech_txt,

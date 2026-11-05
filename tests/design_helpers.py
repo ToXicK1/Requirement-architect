@@ -96,3 +96,38 @@ def raw_endpoint(key: str = "EP1", **kw: Any) -> dict[str, Any]:
         "entity_keys": ["E1"],
     }
     return base | kw
+
+
+def raw_control(key: str = "SC1", **kw: Any) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "key": key,
+        "name": f"Control {key}",
+        "description": "d",
+        "area": "authentication",
+        "requirement_ids": ["FR-001"],
+    }
+    return base | kw
+
+
+def raw_threat(key: str = "TH1", **kw: Any) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "key": key,
+        "title": f"Threat {key}",
+        "category": "spoofing",
+        "asset": "accounts",
+        "description": "d",
+        "likelihood": "medium",
+        "impact": "medium",
+        "control_keys": ["SC1"],
+    }
+    return base | kw
+
+
+def raw_security(**kw: Any) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "is_ai_project": False,
+        "handles_sensitive_data": False,
+        "threats": [raw_threat()],
+        "controls": [raw_control()],
+    }
+    return base | kw
