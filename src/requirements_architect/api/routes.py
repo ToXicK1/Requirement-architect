@@ -9,11 +9,16 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 
 from requirements_architect.agent.approvals import ApprovalError, Decision
-from requirements_architect.agent.service import AnswerValidationError, WorkflowStateError
+from requirements_architect.agent.service import (
+    AnswerValidationError,
+    WorkflowService,
+    WorkflowStateError,
+)
 from requirements_architect.api.auth import AuthError, RateLimitedError
 from requirements_architect.api.container import Container
 from requirements_architect.api.jobs import JobBusyError
 from requirements_architect.api.schemas import Answers, Credentials, DecisionIn, NewProject
+from requirements_architect.audit.service import AuditService
 from requirements_architect.generators.docs.bundle import MANIFEST, Manifest, safe_relative
 from requirements_architect.generators.docs.model import ROOT
 from requirements_architect.schemas.audit import AuditReport
@@ -28,6 +33,16 @@ _DOC_STATES = {
     WorkflowStatus.AUDIT_COMPLETE.value,
     WorkflowStatus.DOCUMENTS_COMPLETE.value,
 }
+
+
+def client_ip(request: Request, trust_forwarded: bool) -> str:
+    """The proxy appends the real peer to X-Forwarded-For, so only the LAST entry is trustworthy;
+    earlier entries are client-supplied and can be forged."""
+    if trust_forwarded:
+        last = request.headers.get("x-forwarded-for", "").split(",")[-1].strip()
+        if last:
+            return last[:64]
+    return request.client.host if request.client else "unknown"
 
 
 def container(request: Request) -> Container:
@@ -71,9 +86,10 @@ async def owned_project(project_id: str, user: U, c: C) -> Project:
 P = Annotated[Project, Depends(owned_project)]
 
 
-def _need_llm(c: Container) -> None:
+def _need_llm(c: Container) -> tuple[WorkflowService, AuditService]:
     if c.workflow is None or c.audit is None:
         raise HTTPException(503, "the LLM is not configured on this server")
+    return c.workflow, c.audit
 
 
 def _spend(c: Container, user: User) -> None:
@@ -127,7 +143,7 @@ async def register(body: Credentials, c: C) -> dict[str, str]:
 
 @router.post("/auth/login")
 async def login(body: Credentials, request: Request, c: C) -> dict[str, str]:
-    client = request.client.host if request.client else "unknown"
+    client = client_ip(request, c.settings.trust_forwarded_for)
     try:
         token, user = await c.auth.login(body.username, body.password, client)
     except RateLimitedError:
@@ -177,29 +193,25 @@ async def status(p: P, c: C) -> dict[str, Any]:
 
 @router.post("/projects/{project_id}/start", status_code=202)
 async def start(p: P, user: U, c: C) -> dict[str, Any]:
-    _need_llm(c)
-    assert c.workflow is not None
+    wf, _ = _need_llm(c)
     if p.status != WorkflowStatus.CREATED.value:
         raise HTTPException(409, f"project already started (status={p.status})")
     _spend(c, user)
-    wf = c.workflow
     await c.accounts.log("workflow.start", user_id=user.id, project_id=p.id)
     return _start_job(c, p.id, "workflow", lambda: wf.start(p.id))
 
 
 @router.post("/projects/{project_id}/answers", status_code=202)
 async def answer(body: Answers, p: P, user: U, c: C) -> dict[str, Any]:
-    _need_llm(c)
-    assert c.workflow is not None
+    wf, _ = _need_llm(c)
     answers = [ClarificationAnswer(**a.model_dump()) for a in body.answers]
     try:
-        await c.workflow.validate_answers(p.id, answers)
+        await wf.validate_answers(p.id, answers)
     except WorkflowStateError as exc:
         raise HTTPException(409, str(exc)) from None
     except AnswerValidationError as exc:
         raise HTTPException(422, str(exc)) from None
     _spend(c, user)
-    wf = c.workflow
     await c.accounts.log(
         "workflow.answers", user_id=user.id, project_id=p.id, detail={"count": len(answers)}
     )
@@ -208,13 +220,11 @@ async def answer(body: Answers, p: P, user: U, c: C) -> dict[str, Any]:
 
 @router.post("/projects/{project_id}/retry", status_code=202)
 async def retry(p: P, user: U, c: C) -> dict[str, Any]:
-    _need_llm(c)
-    assert c.workflow is not None
-    snap = await c.workflow.snapshot(p.id)
+    wf, _ = _need_llm(c)
+    snap = await wf.snapshot(p.id)
     if snap.status != WorkflowStatus.FAILED.value:
         raise HTTPException(409, f"nothing to retry (status={snap.status})")
     _spend(c, user)
-    wf = c.workflow
     await c.accounts.log("workflow.retry", user_id=user.id, project_id=p.id)
     return _start_job(c, p.id, "workflow", lambda: wf.retry(p.id))
 
@@ -249,12 +259,10 @@ async def output(stage: StageId, p: P, c: C, version: int | None = None) -> dict
 # ---------------------------------------------------------------- audit
 @router.post("/projects/{project_id}/audit", status_code=202)
 async def run_audit(p: P, user: U, c: C) -> dict[str, Any]:
-    _need_llm(c)
-    assert c.audit is not None
+    _, audit = _need_llm(c)
     if p.status not in _DOC_STATES:
         raise HTTPException(409, f"specifications are not complete (status={p.status})")
     _spend(c, user)
-    audit = c.audit
     await c.accounts.log("audit.run", user_id=user.id, project_id=p.id)
     return _start_job(c, p.id, "audit", lambda: audit.run(p.id))
 

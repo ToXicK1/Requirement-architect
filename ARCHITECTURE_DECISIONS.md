@@ -105,3 +105,10 @@ No framework, no inline script or style, strict CSP (`default-src 'none'; script
 LangGraph's Postgres saver is not installed; `CHECKPOINT_PATH` points to a SQLite file even when application data is in PostgreSQL. This is a single-instance limitation and a gap against a fully Postgres production setup; Phase 10 decides between adding the Postgres saver and keeping one instance.
 ## ADR-049: The API exposes steps; it does not auto-chain analyze -> audit -> documents
 Each step is a separate, authorised, rate-limited call so a human can review between them (hybrid approval). A one-click chain would skip those review points.
+
+## ADR-050: PostgreSQL verified by running the same test suite against it
+`TEST_DATABASE_URL` switches the shared fixtures to PostgreSQL (schema dropped and recreated per test). All tests except the SQLite-specific migration test pass on PostgreSQL 16; the migration chain itself was verified up/down/up and `alembic check` on PostgreSQL. The checkpointer remains SQLite (ADR-048).
+## ADR-051: Forwarded client addresses are opt-in and use the last entry only
+`TRUST_FORWARDED_FOR` (default off). The last `X-Forwarded-For` entry is the one appended by the trusted proxy; earlier ones are client-supplied.
+## ADR-052: Benchmarks are inputs plus a live runner, not a scored suite
+`benchmarks/problems.json` (23 problems incl. vague, contradictory, adversarial, out-of-scope and non-English) and `scripts/benchmark.py` record where live runs end and the audit verdict. There is no automatic quality score: judging a generated package needs a human.

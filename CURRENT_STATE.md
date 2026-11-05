@@ -1,5 +1,5 @@
 # Current State
-- **Phase:** 9 (application interface) implemented and tested; next Phase 10 (production hardening).
+- **Phase:** 10 (hardening) done except items needing a real model, Docker daemon or live CI; see TASK_TRACKER P10-*.
 - **Completed:** P1-01..05, P2-01..06, P3-01..07, P4-01..07, P5-01..06, P6-01..06, P7-01..09, P8-01..07, P9-01..08, P9-10 (TESTED); P9-09 UI (IMPLEMENTED, not browser-tested).
 - **Workflow today:** understand -> clarify -> (pause for answers) -> finish -> research -> requirements -> architecture -> technology -> data_api -> security -> ux -> qa_deploy -> `specifications_complete` (research onward only when a ResearchService is supplied; otherwise ends `ready_for_research`).
 - **Known issues / unverified:**
@@ -23,6 +23,6 @@
   cd requirements-architect && python3 -m venv .venv && . .venv/bin/activate
   pip install -e ".[dev]" && pytest -q && ruff check . && mypy src
   ```
-- **Last verified results:** pytest 577 passed; ruff + format clean; mypy strict clean (101 files); `alembic check` clean (migration 30bd38d42546).
+- **Last verified results:** pytest 580 passed (578 on PostgreSQL 16); ruff + format clean; mypy strict clean (101 files); `alembic check` clean on SQLite and PostgreSQL (migration 30bd38d42546); pip-audit clean; bandit clean at medium+.
 - **External deps needed:** LLM key (live runs); optional Brave key (web search); optional GitHub token; PostgreSQL/Docker host.
-- **Next actions:** Phase 10: verify on PostgreSQL and Docker, dependency/security scan in CI, shared rate-limit store and job queue or a documented single-instance constraint, Postgres checkpointer decision, TLS/proxy guidance (client IP), backup/recovery and residual-risk docs, 20+ benchmark problems, optional Mermaid rendering in the PDF, separate review-gateway configuration, browser/accessibility testing of the UI, a human-owned-finding approval flow.
+- **Next actions:** (1) a real-model run: the user's first run failed with a generic error (diagnostics improved; need the logged reason) - fix what it shows, then run `scripts/benchmark.py`; (2) `docker build`/compose on a host with Docker; (3) first CI run on GitHub; (4) residual-risk items in docs/SECURITY.md (single instance, account lifecycle, Mermaid in PDF, Postgres checkpointer).

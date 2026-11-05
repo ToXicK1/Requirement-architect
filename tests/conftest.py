@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
@@ -234,6 +235,18 @@ class Stack:
     engine: Any = None
 
 
+def db_url_for(tmp_path: Path, name: str) -> str:
+    """SQLite by default; set TEST_DATABASE_URL to run the same tests on PostgreSQL."""
+    return os.environ.get("TEST_DATABASE_URL") or f"sqlite+aiosqlite:///{tmp_path / name}"
+
+
+async def reset_schema(engine: Any) -> None:
+    async with engine.begin() as conn:
+        if os.environ.get("TEST_DATABASE_URL"):
+            await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+
+
 @asynccontextmanager
 async def make_stack(
     tmp_path: Path,
@@ -243,10 +256,9 @@ async def make_stack(
     research_factory: Callable[[Repository, LLMGateway], ResearchService] | None = None,
 ) -> AsyncIterator[Stack]:
     """Fresh gateway/graph/checkpointer connection over the SAME sqlite files in tmp_path."""
-    engine = make_engine(f"sqlite+aiosqlite:///{tmp_path / 'app.db'}")
+    engine = make_engine(db_url_for(tmp_path, "app.db"))
     if init_db:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+        await reset_schema(engine)
     repo = Repository(make_session_factory(engine))
     provider = FakeProvider([script])
 

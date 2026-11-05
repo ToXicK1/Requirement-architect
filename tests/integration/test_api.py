@@ -437,3 +437,31 @@ async def test_unlisted_files_on_disk_are_not_served(tmp_path):
         (root / "extra.txt").write_text("not in the manifest")
         r = await client.get(f"{V}/projects/{pid}/documents/files/extra.txt", headers=h)
         assert r.status_code == 404
+
+
+async def test_forwarded_for_is_ignored_unless_trusted_and_only_the_last_entry_counts(tmp_path):
+    bad = {"username": "alice", "password": "wrong-password-1"}
+    async with make(tmp_path) as (client, c, _):
+        await c.auth.register("alice", PASSWORD)
+        for n in range(5):  # spoofed headers must not dodge the limit when not trusted
+            await client.post(
+                f"{V}/auth/login", json=bad, headers={"X-Forwarded-For": f"9.9.9.{n}"}
+            )
+        r = await client.post(f"{V}/auth/login", json=bad, headers={"X-Forwarded-For": "8.8.8.8"})
+        assert r.status_code == 429
+    (tmp_path / "t").mkdir()
+    async with make(tmp_path / "t") as (client, c, _):
+        c.settings.trust_forwarded_for = True
+        await c.auth.register("alice", PASSWORD)
+        hdr = lambda ip: {"X-Forwarded-For": f"1.2.3.4, {ip}"}
+        for _ in range(5):
+            await client.post(f"{V}/auth/login", json=bad, headers=hdr("7.7.7.7"))
+        assert (
+            await client.post(f"{V}/auth/login", json=bad, headers=hdr("7.7.7.7"))
+        ).status_code == 429
+        other = await client.post(
+            f"{V}/auth/login",
+            json={"username": "alice", "password": PASSWORD},
+            headers=hdr("6.6.6.6"),
+        )
+        assert other.status_code == 200  # a different client address is counted separately

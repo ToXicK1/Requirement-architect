@@ -81,3 +81,13 @@ Statuses: NOT_STARTED, IN_PROGRESS, BLOCKED, IMPLEMENTED, TESTED, VERIFIED
 | P9-09 | Static web UI (text-only rendering, strict CSP) | M | IMPLEMENTED | P9-05 | not browser-tested; JS syntax-checked and served only |
 | P9-10 | CLI: create-user (no password argument), serve | M | TESTED | P9-02 | |
 | P9-11 | Audit as graph node; multi-instance job queue; shared rate-limit store; Postgres checkpointer | M | NOT_STARTED | P10 | see ADR-042/044/048 |
+| P10-01 | Run full suite on PostgreSQL 16; migrations up/down/check there | H | TESTED | P9 | local PostgreSQL, not the compose service |
+| P10-02 | Production-mode startup on PostgreSQL smoke test | H | TESTED | P10-01 | fake key: only the 401 path exercised |
+| P10-03 | Dockerfile, entrypoint (migrate then serve), compose hardening, .dockerignore | H | IMPLEMENTED | P10-02 | `docker build` never run: no Docker daemon available |
+| P10-04 | pip-audit and bandit run; assert removed from routes | H | TESTED | | run manually and in the CI file, not yet in a live CI |
+| P10-05 | CI workflow (lint, types, tests on SQLite and PostgreSQL, bandit, pip-audit) | M | IMPLEMENTED | P10-04 | never executed on GitHub |
+| P10-06 | Trusted-proxy client address setting | M | TESTED | P9 | |
+| P10-07 | Benchmark problem set (23) + live runner | M | IMPLEMENTED | | runner never run against a model |
+| P10-08 | Deployment, operations (backup/restore), security/residual-risk docs | H | DONE | | restore verified for the database only |
+| P10-09 | Live run with a real model; fix what it reveals | H | BLOCKED | | needs the user's API key or the user's logs |
+| P10-10 | Mermaid rendering in PDF; shared rate-limit store/queue; Postgres checkpointer; account lifecycle | M | NOT_STARTED | | see docs/SECURITY.md residual risks |

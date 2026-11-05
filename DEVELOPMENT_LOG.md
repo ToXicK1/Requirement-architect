@@ -65,3 +65,9 @@
 - Tests: 577 passed. ruff, ruff format, mypy strict (101 files), `alembic check` clean. Real server smoke test: created a user with the CLI, logged in over HTTP, created a project, got 503 for start without an LLM, UI served with CSP.
 - Mutation testing: 25 mutants; 5 survived first (latest-decision-wins, manifest whitelist, symlink containment, error-message hiding, declared-size shortcut) -> tests added -> all killed.
 - NOT verified: the UI in a real browser (JS only syntax-checked and fetched); any real-model run through the API; PostgreSQL; multi-worker behaviour (jobs, limits, locks are in-process); proxy/TLS deployment; accessibility with assistive technology.
+
+## Session 10 - Phase 10 hardening
+- Done: whole suite on PostgreSQL 16 (575/575 non-migration tests; migration chain up/down/check); production-mode server on PostgreSQL; pip-audit clean; bandit clean at medium+; removed `assert` narrowing in routes; Dockerfile/entrypoint/compose/.dockerignore; CI workflow file; `TRUST_FORWARDED_FOR`; benchmark set + runner; docs/DEPLOYMENT.md, OPERATIONS.md, SECURITY.md; backup/restore of the database verified by row counts and migration revision.
+- Also: user's first live run failed with "internal error"; job/workflow logs now include a scrubbed reason and LLM gateway errors are shown in the job status.
+- Tests: 580 passed on SQLite, 578 on PostgreSQL (migration test excluded). ruff, format, mypy strict (101 files) clean.
+- NOT verified: `docker build`/compose up; GitHub CI run; any real-model run end to end (the sandbox reached api.anthropic.com and got a 401 for a fake key, so a real key could work here); load/performance; multi-instance behavior; disaster-recovery drill on a new host; the benchmark runner.

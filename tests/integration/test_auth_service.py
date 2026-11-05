@@ -5,16 +5,16 @@ import pytest
 from requirements_architect.api.auth import AuthError, AuthService, RateLimitedError
 from requirements_architect.core.security import RateLimiter
 from requirements_architect.storage.accounts import AccountRepository, UsernameTakenError
-from requirements_architect.storage.database import Base, make_engine, make_session_factory
+from requirements_architect.storage.database import make_engine, make_session_factory
+from tests.conftest import db_url_for, reset_schema
 
 PW = "a reasonable passphrase 42"
 
 
 @pytest.fixture
 async def auth(tmp_path):
-    engine = make_engine(f"sqlite+aiosqlite:///{tmp_path / 'a.db'}")
-    async with engine.begin() as c:
-        await c.run_sync(Base.metadata.create_all)
+    engine = make_engine(db_url_for(tmp_path, "a.db"))
+    await reset_schema(engine)
     accounts = AccountRepository(make_session_factory(engine))
     svc = AuthService(accounts, timedelta(hours=1), RateLimiter(3, 300))
     svc.accounts = accounts

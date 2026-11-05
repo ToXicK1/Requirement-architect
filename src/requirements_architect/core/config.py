@@ -43,6 +43,9 @@ class Settings(BaseSettings):
 
     # --- Access control ---
     allow_registration: bool = False  # otherwise create users with the CLI
+    # Behind exactly one trusted reverse proxy that appends the real client address to
+    # X-Forwarded-For, enable this so rate limits are per client rather than per proxy.
+    trust_forwarded_for: bool = False
     session_ttl_hours: int = Field(default=12, ge=1, le=24 * 30)
 
     # --- Audit (Stage 11): bounded so it can never regenerate endlessly ---

@@ -1,3 +1,5 @@
+# Single-instance deployment (jobs, rate limits and locks are in-process: do NOT scale `api`).
+# Put a TLS-terminating reverse proxy in front; the API port is bound to localhost only.
 services:
   db:
     image: postgres:16
@@ -14,9 +16,13 @@ services:
     build: .
     env_file: .env
     environment:
+      APP_ENV: production
       DATABASE_URL: postgresql+asyncpg://ra:${POSTGRES_PASSWORD}@db:5432/requirements_architect
     depends_on:
       db: {condition: service_healthy}
-    ports: ["8000:8000"]
+    ports: ["127.0.0.1:8000:8000"]
+    volumes: [appdata:/data]
+    restart: unless-stopped
 volumes:
   pgdata:
+  appdata:

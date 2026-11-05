@@ -12,6 +12,6 @@ Phases follow the master instruction (Section 17). Completion = tests pass AND b
 | 7 | Documentation generation | Markdown tree, PDF, manifest, ZIP (DONE with scripted inputs; audit docs pending Phase 8; diagrams are source only) |
 | 8 | Audit engine | Deterministic + LLM validators, bounded remediation (DONE with scripted LLM; real-model behavior unverified) |
 | 9 | Application interface | Auth, dashboard, approvals, downloads, CLI (DONE on scripted LLM; UI not browser-tested; in-process jobs and limits) |
-| 10 | Production hardening | Full tests, security scan, backup/recovery docs, deployment verification |
+| 10 | Production hardening | Full tests, security scan, backup/recovery docs, deployment verification (PARTIAL: Postgres verified; Docker, CI and real-model runs not) |
 
 Dependencies: 2 -> 3 -> 4/5 -> 6 -> 7 -> 8 -> 9 -> 10.
