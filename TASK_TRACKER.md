@@ -36,4 +36,12 @@ Statuses: NOT_STARTED, IN_PROGRESS, BLOCKED, IMPLEMENTED, TESTED, VERIFIED
 | P4-07 | Workflow integration (research node, retry) | H | TESTED | P4-06 | |
 | P4-08 | Live research run (real search + real LLM) | H | BLOCKED | P4-06,P2-07 | needs LLM key (+ Brave key for web search) |
 | P4-09 | Dependency vulnerability scan | M | PARTIAL | - | pip-audit run once: only sandbox `pip` flagged; not yet in CI |
-| P5-* | Requirements engineering (FR/NFR, IDs, traceability) | H | NOT_STARTED | P4 | |
+| P5-01 | Requirements schemas (Raw* model layer vs final layer) | H | TESTED | P4 | model cannot supply ids, approval state or needs_confirmation |
+| P5-02 | build_spec reconciler (ids, refs, cycles, assumptions, NFR targets) | H | TESTED | P5-01 | 11/11 mutants killed |
+| P5-03 | approve_nfr_targets (proposed -> user_approved) | H | TESTED | P5-02 | function only; approval API/UI is Phase 9 |
+| P5-04 | Traceability: links, coverage, orphans, dangling, CSV export (+formula-injection guard) | H | TESTED | P5-01 | only objective/story links exist so far |
+| P5-05 | requirements prompt v1 + generate_requirements | H | TESTED | P5-02 | scripted LLM only; never run on a real model |
+| P5-06 | Workflow node (research -> requirements), retry, deps recorded | H | TESTED | P5-05 | node exists only when a ResearchService is supplied |
+| P5-07 | Live requirements run with a real LLM | H | BLOCKED | P5-06,P2-07 | needs LLM key |
+| P5-08 | Remediation of NFR-category gaps / uncited facts | M | NOT_STARTED | P8 | issues are reported, not auto-fixed; audit engine owns remediation |
+| P6-* | Architecture, technology, DB/API, security, UX, QA/deploy stages | H | NOT_STARTED | P5 | will add component/entity/endpoint/control/test/task trace links |

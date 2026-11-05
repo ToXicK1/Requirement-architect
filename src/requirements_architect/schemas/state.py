@@ -37,6 +37,7 @@ class WorkflowStatus(StrEnum):
     AWAITING_CLARIFICATION = "awaiting_clarification"
     READY_FOR_RESEARCH = "ready_for_research"
     RESEARCH_COMPLETE = "research_complete"
+    REQUIREMENTS_COMPLETE = "requirements_complete"
     FAILED = "failed"
 
 

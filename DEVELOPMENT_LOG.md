@@ -26,3 +26,12 @@
 - Mutation testing: SSRF/fetcher 10/11 killed (1 equivalent: IPv4-mapped unwrap redundant on py3.12 -> kept as defence in depth); Stage 3 logic 16/16 killed.
 - Tests: 287 passed. ruff + mypy strict clean. pip-audit: only sandbox pip flagged.
 - NOT verified: any live network call (search, registries, OSV, GitHub); Brave response schema vs live API; real-model prompt quality; production egress controls; PG.
+
+## Session 5 - Phase 5 requirements engineering
+- Found on resume: the sandbox had been reset (no repo); restored from the phase4 tarball and RE-VERIFIED before building (287 tests, ruff, mypy all green). Found a stale `build/` copy of the source committed to git -> removed and gitignored.
+- Built: requirements schemas, build_spec reconciler, approve_nfr_targets, traceability module + CSV export, versioned prompt, generate_requirements, workflow node.
+- Existing tests changed deliberately: research workflow tests now end at `requirements_complete` (was `research_complete`); test Script gained a `requirements` route.
+- Tests: 315 passed (28 new). ruff + mypy strict clean. No schema change (alembic untouched).
+- Mutation testing: 11/11 killed (finding filter, assumption flagging, cycle detection, NFR status, CSV guard, dangling links, approve validation, dependency metadata, prompt delimiting, orphan stories, uncited-fact flag).
+- NOT verified: any real-model output (prompt quality, whether models obey the key/objective/citation rules); NFR category completeness in practice; Postgres; live network.
+- Observation (not acted on): a network probe showed pypi.org and registry.npmjs.org reachable (HTTP 200), api.github.com returned 403, example.com DNS failed. A live smoke test of the PyPI/npm adapters may be possible; not attempted this session.

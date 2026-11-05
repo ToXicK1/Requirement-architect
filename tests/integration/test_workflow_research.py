@@ -21,8 +21,8 @@ async def test_research_runs_after_clarification_and_records_dependencies(tmp_pa
         snap = await st.service.resume(
             p.id, [ClarificationAnswer(question_id="Q-001", answer="EU only")]
         )
-        assert snap.status == "research_complete"
-        assert (await st.repo.get_project(p.id)).status == "research_complete"
+        assert snap.status == "requirements_complete"
+        assert (await st.repo.get_project(p.id)).status == "requirements_complete"
         meta, report = await st.repo.get_latest_output(p.id, StageId.RESEARCH, ResearchReport)
         assert meta.depends_on == [
             Dependency(stage_id=StageId.PROBLEM_UNDERSTANDING, version=1),
@@ -44,7 +44,7 @@ async def test_research_failure_is_retryable_without_redoing_earlier_stages(tmp_
         assert (await st.service.snapshot(p.id)).status == "failed"
         assert await st.repo.list_versions(p.id, StageId.RESEARCH) == []
         snap = await st.service.retry(p.id)
-        assert snap.status == "research_complete"
+        assert snap.status == "requirements_complete"
         assert (script.calls["understand"], script.calls["clarify"]) == (1, 1)
         assert await st.repo.list_versions(p.id, StageId.RESEARCH) == [1]
 

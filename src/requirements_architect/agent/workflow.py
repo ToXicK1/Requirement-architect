@@ -19,9 +19,11 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import interrupt
 
 from requirements_architect.agent.stages.clarification import run_clarification
+from requirements_architect.agent.stages.requirements import generate_requirements
 from requirements_architect.agent.stages.understanding import run_problem_understanding
 from requirements_architect.llm.gateway import LLMGateway
 from requirements_architect.research.service import ResearchService
+from requirements_architect.schemas.research import ResearchReport
 from requirements_architect.schemas.state import (
     ClarificationAnswer,
     ClarificationPlan,
@@ -46,6 +48,7 @@ class WorkflowState(TypedDict, total=False):
     round: int
     status: str
     research_version: int
+    requirements_version: int
 
 
 def build_workflow(
@@ -137,6 +140,33 @@ def build_workflow(
         await repo.set_status(pid, WorkflowStatus.RESEARCH_COMPLETE.value)
         return {"status": WorkflowStatus.RESEARCH_COMPLETE.value, "research_version": meta.version}
 
+    async def do_requirements(state: WorkflowState) -> dict[str, Any]:
+        pid = state["project_id"]
+        project = await repo.get_project(pid)
+        answers = await repo.get_answers(pid)
+        latest_research = await repo.get_latest_output(pid, StageId.RESEARCH, ResearchReport)
+        report = latest_research[1] if latest_research else None
+        spec = await generate_requirements(
+            gateway,
+            pid,
+            project.problem_statement,
+            ProjectBrief.model_validate(state["brief"]),
+            answers,
+            report,
+        )
+        deps = [Dependency(stage_id=StageId.PROBLEM_UNDERSTANDING, version=state["brief_version"])]
+        clar = await repo.list_versions(pid, StageId.CLARIFICATION)
+        if clar:
+            deps.append(Dependency(stage_id=StageId.CLARIFICATION, version=clar[-1]))
+        if latest_research:
+            deps.append(Dependency(stage_id=StageId.RESEARCH, version=latest_research[0].version))
+        meta = await repo.save_stage_output(pid, StageId.REQUIREMENTS, spec, deps)
+        await repo.set_status(pid, WorkflowStatus.REQUIREMENTS_COMPLETE.value)
+        return {
+            "status": WorkflowStatus.REQUIREMENTS_COMPLETE.value,
+            "requirements_version": meta.version,
+        }
+
     def after_clarify(state: WorkflowState) -> str:
         return "gate" if state.get("open_questions") else "finish"
 
@@ -159,7 +189,9 @@ def build_workflow(
     if research is not None:
         g.add_node("research", do_research)
         g.add_edge("finish", "research")
-        g.add_edge("research", END)
+        g.add_node("requirements", do_requirements)
+        g.add_edge("research", "requirements")
+        g.add_edge("requirements", END)
     else:
         g.add_edge("finish", END)
     return g.compile(checkpointer=checkpointer)

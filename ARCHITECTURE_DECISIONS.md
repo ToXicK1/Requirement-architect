@@ -38,3 +38,14 @@ Look-alike hosts get no trust. Unlisted hosts are LOW. The list is deliberately 
 Retrieved text is delimited, tag-neutralized, invisible-char-stripped and flagged. Flagged sources are kept (security docs legitimately discuss injection). Output is schema-validated and quote-verified, so a successful injection cannot manufacture 'verified' facts. The regex flagger is a heuristic signal, not a boundary.
 ## ADR-018: Research evidence stored as a versioned stage output (no new tables)
 Reuses append-only versioning; full page text is not persisted (hash + 2,000-char excerpt only) to limit storage and copyright exposure.
+
+## ADR-019: Requirements ids, approval state and confirmation flags are assigned by code, never by the model
+The model returns local keys (R1..) and may only *propose* NFR targets. `build_spec` assigns FR-/NFR-/US-/OBJ- ids, sets `target_status=proposed|none`, and sets `needs_confirmation`. `user_approved` can only come from `approve_nfr_targets`. Extra fields the model supplies (ids, approval) are ignored by the Raw schemas. Alternative: trust model ids (rejected: collisions, forged approval).
+## ADR-020: Problems in model output become `SpecIssue`s; only unresolvable references are dropped
+Unknown finding/objective/dependency/story references are removed (they cannot be honoured) and reported. Cycles, uncited external-fact dependencies and missing NFR categories are reported, not "fixed", because repairing them would change requirements. Remediation belongs to the Phase 8 audit engine, which is independent of generation (spec section 6, stage 11).
+## ADR-021: Business rules the user did not state are `assumption`, hoisted into spec.assumptions
+Honours "do not invent business requirements": inferred rules stay visible, de-duplicated, and flag the requirement `needs_confirmation`.
+## ADR-022: Traceability is a pure function over (spec, links, known targets)
+Later stages only append links and extend `required`; no schema change needed. CSV export neutralizes leading = + - @ because names are model/user text opened in spreadsheets.
+## ADR-023: Requirements node exists only when research is configured
+It consumes the persisted research report, so the graph is research -> requirements. Without a ResearchService the workflow still ends at `ready_for_research` (unchanged behaviour; existing tests kept).

@@ -22,6 +22,30 @@ from tests.fakes import FakeProvider
 BRIEF = {"actual_problem": "slow onboarding", "proposed_solution": "an onboarding app"}
 
 
+def raw_fr(key: str = "R1", **overrides: Any) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "key": key,
+        "name": f"Requirement {key}",
+        "description": "d",
+        "justification": "j",
+        "objective": None,
+        "actor": "user",
+        "trigger": "t",
+        "expected_behavior": "b",
+        "priority": "must",
+        "acceptance_criteria": [{"given": "g", "when": "w", "then": "t"}],
+        "validation_method": "test",
+    }
+    return base | overrides
+
+
+MINIMAL_REQUIREMENTS: dict[str, Any] = {
+    "functional": [raw_fr("R1")],
+    "nonfunctional": [],
+    "user_stories": [{"actor": "user", "want": "w", "benefit": "b", "requirement_keys": ["R1"]}],
+}
+
+
 def q(qid: str, text: str, blocking: bool = True) -> dict[str, Any]:
     return {"id": qid, "question": text, "reason": "r", "impact": "i", "blocking": blocking}
 
@@ -41,12 +65,14 @@ class Script:
     research_synthesis: list[Any] = field(
         default_factory=lambda: [{"feasibility_summary": "feasible", "findings": []}]
     )
+    requirements: list[Any] = field(default_factory=lambda: [MINIMAL_REQUIREMENTS])
     calls: dict[str, int] = field(
         default_factory=lambda: {
             "understand": 0,
             "clarify": 0,
             "research_plan": 0,
             "research_synthesis": 0,
+            "requirements": 0,
         }
     )
     requests: list[LLMRequest] = field(default_factory=list)
@@ -60,6 +86,8 @@ class Script:
             stage = "research_plan"
         elif "evidence-based feasibility" in sysmsg:
             stage = "research_synthesis"
+        elif "writing a software requirements specification" in sysmsg:
+            stage = "requirements"
         else:
             stage = "clarify"
         queue = getattr(self, stage)
