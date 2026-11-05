@@ -3,6 +3,7 @@ from __future__ import annotations
 from requirements_architect.generators.docs import md
 from requirements_architect.generators.docs.model import Doc, DocInputs, not_applicable
 from requirements_architect.generators.docs.tasks import Plan, task_links
+from requirements_architect.schemas.audit import AuditSeverity
 from requirements_architect.validation.design_traceability import design_links, design_targets
 from requirements_architect.validation.traceability import (
     TraceKind,
@@ -133,3 +134,132 @@ def render(i: DocInputs, plan: Plan) -> list[Doc]:
         )
     )
     return docs
+
+
+def render_audit(i: DocInputs) -> list[Doc]:
+    """REQUIREMENTS_AUDIT.md and FINAL_READINESS_REPORT.md; only when a current audit exists."""
+    a = i.audit
+    if a is None:
+        return []
+    by_sev = {s.value: a.count(s) for s in AuditSeverity}
+    findings = md.table(
+        ["ID", "Severity", "Category", "Source", "Code", "References", "Finding", "Resolution"],
+        [
+            (
+                f.id,
+                f.severity.value,
+                f.category.value,
+                f.source,
+                f.code,
+                ", ".join(f.refs) or "-",
+                f.message,
+                "regenerate automatically"
+                if f.auto_fixable and not f.needs_human
+                else "human decision",
+            )
+            for f in a.findings
+        ],
+    )
+    audit = md.join(
+        md.section("Verdict", f"**{a.verdict.value}**", md.text(_VERDICT_NOTE[a.verdict.value])),
+        md.section(
+            "Quality gates",
+            md.table(
+                ["Gate", "Result", "Detail"],
+                [(g.name, "pass" if g.passed else "FAIL", g.detail) for g in a.gates],
+            ),
+        ),
+        md.section("Findings by severity", md.table(["Severity", "Count"], list(by_sev.items()))),
+        md.section("Findings", findings or "No findings."),
+        md.section(
+            "Remediation tasks",
+            md.table(
+                ["Task", "Finding", "Owner", "Action"],
+                [(t.id, t.finding_id, t.owner, t.action) for t in a.tasks],
+            )
+            or "None.",
+        ),
+        md.section(
+            "Audit rounds",
+            md.table(
+                ["Round", "Findings", "Blocker", "Major", "Minor", "Info", "Stages regenerated"],
+                [
+                    (
+                        r.round,
+                        r.findings,
+                        *[r.by_severity.get(k, 0) for k in ("blocker", "major", "minor", "info")],
+                        ", ".join(r.regenerated) or "-",
+                    )
+                    for r in a.rounds
+                ],
+            ),
+        ),
+        md.section(
+            "Independent review",
+            f"LLM review: {a.llm_review}. "
+            + (
+                f"{a.llm_discarded} model finding(s) were discarded because they cited ids that do not exist. "
+                if a.llm_discarded
+                else ""
+            )
+            + "Model findings are judgments, never auto-applied, and can be dismissed by a human.",
+        ),
+        md.section("Limitations", md.bullets(a.limitations)),
+    )
+    humans = [t for t in a.tasks if t.owner == "human"]
+    approvals = [f for f in a.findings if f.code == "AWAITING_APPROVAL"]
+    open_auto = [t for t in a.tasks if t.owner == "auto"]
+    ready = md.join(
+        md.section(
+            "Readiness verdict", f"**{a.verdict.value}**", md.text(_VERDICT_NOTE[a.verdict.value])
+        ),
+        md.section(
+            "Summary",
+            md.table(
+                ["Measure", "Value"],
+                [
+                    ("Functional requirements", len(i.requirements.functional)),
+                    ("Non-functional requirements", len(i.requirements.nonfunctional)),
+                    (
+                        "Components / endpoints / entities",
+                        f"{len(i.architecture.components)} / {len(i.data_api.endpoints)} / {len(i.data_api.entities)}",
+                    ),
+                    ("Test cases", len(i.qa.test_cases)),
+                    (
+                        "Blocker / major / minor findings",
+                        f"{by_sev['blocker']} / {by_sev['major']} / {by_sev['minor']}",
+                    ),
+                    ("Items awaiting human approval", len(approvals)),
+                    ("Remediation tasks needing a human", len(humans)),
+                    ("Remediation tasks the system could still fix", len(open_auto)),
+                ],
+            ),
+        ),
+        md.section(
+            "Gates not passed",
+            md.bullets(f"{g.name}: {g.detail}" for g in a.gates if not g.passed)
+            or "All automated gates passed.",
+        ),
+        md.section(
+            "What a human must decide",
+            md.table(
+                ["Task", "Stage", "Action"],
+                [(t.id, t.stage.value if t.stage else "-", t.action) for t in humans[:60]],
+            )
+            or "Nothing recorded.",
+        ),
+        md.section(
+            "Awaiting approval", md.bullets(f.message for f in approvals) or "Nothing recorded."
+        ),
+        md.section("Limitations", md.bullets(a.limitations)),
+    )
+    return [
+        Doc("10_VALIDATION/REQUIREMENTS_AUDIT.md", "Requirements Audit", audit),
+        Doc("10_VALIDATION/FINAL_READINESS_REPORT.md", "Final Readiness Report", ready),
+    ]
+
+
+_VERDICT_NOTE = {
+    "not_ready": "One or more automated quality gates failed. Do not hand this package to implementers until the failed gates are resolved.",
+    "ready_for_review": "The automated gates passed. This is NOT approval: no human has approved this package, and the checks cannot judge whether it matches the real business need.",
+}

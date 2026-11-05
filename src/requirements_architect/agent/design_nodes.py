@@ -106,8 +106,10 @@ _EXTRA_KEY = {
 }
 
 
-async def load_context(repo: Repository, state: dict[str, Any]) -> StageContext:
-    pid: str = state["project_id"]
+async def load_context(
+    repo: Repository, project_id: str, brief: ProjectBrief, feedback: str | None = None
+) -> StageContext:
+    pid = project_id
     project = await repo.get_project(pid)
     latest_req = await repo.get_latest_output(pid, StageId.REQUIREMENTS, RequirementsSpec)
     if latest_req is None:
@@ -122,10 +124,12 @@ async def load_context(repo: Repository, state: dict[str, Any]) -> StageContext:
         found = await repo.get_latest_output(pid, stage.stage_id, stage.model)
         if found is not None:
             extras[key] = found[1]
+    if feedback:
+        extras["audit_feedback"] = feedback
     return StageContext(
         project_id=pid,
         problem_statement=project.problem_statement,
-        brief=ProjectBrief.model_validate(state["brief"]),
+        brief=brief,
         answers=await repo.get_answers(pid),
         requirements=latest_req[1],
         research=research[1] if research else None,
@@ -134,20 +138,34 @@ async def load_context(repo: Repository, state: dict[str, Any]) -> StageContext:
     )
 
 
+async def run_design_stage(
+    gateway: LLMGateway,
+    repo: Repository,
+    stage: DesignStage,
+    project_id: str,
+    brief: ProjectBrief,
+    feedback: str | None = None,
+) -> int:
+    """Generate one design stage from the latest persisted inputs and save it as a new version."""
+    ctx = await load_context(repo, project_id, brief, feedback)
+    spec = await stage.generate(gateway, ctx)
+    deps: list[Dependency] = []
+    for dep in stage.depends_on:
+        versions = await repo.list_versions(project_id, dep)
+        if versions:
+            deps.append(Dependency(stage_id=dep, version=versions[-1]))
+    meta = await repo.save_stage_output(project_id, stage.stage_id, spec, deps)
+    return meta.version
+
+
 def make_design_node(
     gateway: LLMGateway, repo: Repository, stage: DesignStage, *, last: bool
 ) -> Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]:
     async def node(state: dict[str, Any]) -> dict[str, Any]:
         pid: str = state["project_id"]
-        ctx = await load_context(repo, state)
-        spec = await stage.generate(gateway, ctx)
-        deps: list[Dependency] = []
-        for dep in stage.depends_on:
-            versions = await repo.list_versions(pid, dep)
-            if versions:
-                deps.append(Dependency(stage_id=dep, version=versions[-1]))
-        meta = await repo.save_stage_output(pid, stage.stage_id, spec, deps)
-        versions_map = {**state.get("design_versions", {}), stage.name: meta.version}
+        brief = ProjectBrief.model_validate(state["brief"])
+        version = await run_design_stage(gateway, repo, stage, pid, brief)
+        versions_map = {**state.get("design_versions", {}), stage.name: version}
         update: dict[str, Any] = {"design_versions": versions_map}
         if last:
             await repo.set_status(pid, WorkflowStatus.SPECS_COMPLETE.value)

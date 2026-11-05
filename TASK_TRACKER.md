@@ -60,5 +60,13 @@ Statuses: NOT_STARTED, IN_PROGRESS, BLOCKED, IMPLEMENTED, TESTED, VERIFIED
 | P7-06 | PDF (ReportLab): cover, TOC, page numbers, tables, references, pending-docs disclosure | H | TESTED | P7-01 | inspected visually; Mermaid shown as source, NOT rendered as pictures |
 | P7-07 | DocumentationService (staged write, verify, versioned manifest, status) | H | TESTED | P7-05,P7-06 | |
 | P7-08 | Render Mermaid diagrams into the PDF | M | NOT_STARTED | P10 | needs a Mermaid renderer (mmdc/Chromium) in the image |
-| P7-09 | REQUIREMENTS_AUDIT.md and FINAL_READINESS_REPORT.md | H | NOT_STARTED | P8 | declared as pending in manifest, PDF and README; not faked |
+| P7-09 | REQUIREMENTS_AUDIT.md and FINAL_READINESS_REPORT.md | H | TESTED | P8 | generated only from a current audit; otherwise declared pending (stale audits are not used) |
 | P7-10 | Expose generation/download through API and CLI | H | NOT_STARTED | P9 | service only, no endpoint yet |
+| P8-01 | Audit schemas (findings, gates, tasks, rounds, verdict never 'approved') | H | TESTED | P7 | |
+| P8-02 | Deterministic checks: references, traceability, completeness, duplicates/cycles, diagram-vs-spec, security gaps, secrets, compliance claims, evidence, assumptions, ambiguity | H | TESTED | P8-01 | 23 tests; heuristics (vague words, role coverage) are noisy by design and only MINOR |
+| P8-03 | Quality gates + remediation tasks (auto vs human) | H | TESTED | P8-02 | thresholds configurable |
+| P8-04 | Independent LLM review (specs only, citations verified by code, severity capped, never auto-fixable) | H | TESTED | P8-02 | scripted LLM only; same-model blind spots unless a separate review gateway is configured |
+| P8-05 | Bounded remediation: regenerate design stages (never requirements) with audit feedback; round, no-progress and stage-run limits | H | TESTED | P8-03 | scripted LLM only; real models may not fix findings |
+| P8-06 | AuditService persists versioned report (stage 12 deps), status `audit_complete` | H | TESTED | P8-05 | service only; no endpoint until Phase 9 |
+| P8-07 | Audit documents in package; stale-audit detection | H | TESTED | P8-06,P7 | |
+| P8-08 | Audit as a LangGraph node / approval flow for human-owned findings | M | NOT_STARTED | P9 | |

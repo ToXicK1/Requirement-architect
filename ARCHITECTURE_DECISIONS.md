@@ -75,3 +75,14 @@ REQUIREMENTS_AUDIT.md and FINAL_READINESS_REPORT.md need the Phase 8 audit engin
 `build_plan` creates tasks from components, entities, endpoints, controls, screens and test cases, orders them by phase then dependency (cycles reported and broken), and emits `task` trace links. The coding-agent handoff cites only these ids.
 ## ADR-035: PDF diagrams are Mermaid source, not rendered images (known gap)
 A Mermaid renderer needs Chromium/mmdc in the runtime image. Until Phase 10 decides that, the PDF shows diagram source and the ZIP carries `diagrams/*.mmd`.
+
+## ADR-036: The audit re-derives problems from the persisted specs instead of trusting stage builders
+Builder issues are passed through (single place to look) but cross-references, traceability, duplicates, cycles, diagram coverage, security gaps, secrets and compliance wording are re-checked on the final stored specs. Duplicated codes are suppressed.
+## ADR-037: LLM review is advisory and independent
+It sees only rendered specs (never generator prompts/reasoning), cites ids that code verifies (findings citing only nonexistent ids are discarded; uncited 'major' is capped to minor; never blocker), cannot set fixability, and is never used to rewrite specs. A major LLM finding still counts toward the major-findings gate. A separate review gateway can be injected for a different model/provider. Same-model review shares blind spots.
+## ADR-038: Remediation regenerates design stages only, and is bounded three ways
+Auto-fixable findings belong to architecture..QA stages; requirements and brief issues are always human tasks, so approved requirements are never altered. Regeneration restarts at the earliest affected stage and redoes everything downstream (they consume earlier ids). Limits: remediation rounds, a total stage-run budget, and stop-if-no-improvement. Feedback reaches the model as an untrusted, delimited block appended to the stage prompt.
+## ADR-039: The verdict can never be 'approved'
+Values are `not_ready` and `ready_for_review`. Gates failing => not_ready. Passing gates only means automated checks passed.
+## ADR-040: Audit is a service, not a graph node (for now)
+It is idempotent and versioned, so it needs no checkpoint resume. Phase 9 will orchestrate analyze -> audit -> documents behind the API. A stale audit (specs changed afterwards) is excluded from the package rather than shown as current.

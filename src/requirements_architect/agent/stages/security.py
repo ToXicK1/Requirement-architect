@@ -40,7 +40,7 @@ _CORE_AREAS = (
     ControlArea.AUDIT,
 )
 _SENSITIVE_AREAS = (ControlArea.PRIVACY, ControlArea.RETENTION, ControlArea.BACKUP)
-_COMPLIANCE_CLAIM = re.compile(
+COMPLIANCE_CLAIM = re.compile(
     r"\b(fully compliant|guarantee[sd]? compliance|ensures? compliance|is compliant with|"
     r"are compliant with|certified|will comply with)\b",
     re.IGNORECASE,
@@ -73,7 +73,7 @@ def build_security(raw: RawSecurityOutput, reqs: RequirementsSpec) -> SecuritySp
         for r in dict.fromkeys(c.requirement_ids):
             if r not in valid_reqs:
                 _issue(issues, "UNKNOWN_REQUIREMENT", f"{cid} cites unknown requirement {r}", cid)
-        if _COMPLIANCE_CLAIM.search(f"{c.name} {c.description}"):
+        if COMPLIANCE_CLAIM.search(f"{c.name} {c.description}"):
             _issue(issues, "COMPLIANCE_CLAIM", f"{cid} reads like a compliance guarantee", cid)
         controls.append(
             Control(
@@ -126,7 +126,7 @@ def build_security(raw: RawSecurityOutput, reqs: RequirementsSpec) -> SecuritySp
                     tid,
                     error=True,
                 )
-        if _COMPLIANCE_CLAIM.search(f"{t.description} {t.residual_note}"):
+        if COMPLIANCE_CLAIM.search(f"{t.description} {t.residual_note}"):
             _issue(issues, "COMPLIANCE_CLAIM", f"{tid} reads like a compliance guarantee", tid)
         threats.append(
             Threat(

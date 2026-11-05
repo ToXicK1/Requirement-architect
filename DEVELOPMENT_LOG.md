@@ -51,3 +51,10 @@
 - Mutation testing: 18 mutants; 3 survived first (duplicate-path guard, README skip in PDF, needs-confirmation list) and exposed weak tests -> tests added -> all killed; 2 equivalent survivors (redundant `..` check behind the path regex; ZIP epoch literal equal to the constant).
 - Visual check: rendered cover, TOC and body pages to PNG and inspected them.
 - NOT verified: a real coding agent consuming CODING_AGENT_INSTRUCTIONS; PDF in other viewers; non-Latin text beyond the font's coverage (unsupported characters become '?' and are reported); Mermaid correctness in a real parser; large projects (hundreds of requirements) for PDF time/size; Docker image has the fonts it needs (Vera ships with ReportLab, DejaVu used if present).
+
+## Session 8 - Phase 8 audit engine
+- Built: `schemas/audit.py`, `audit/{specset,checks,engine,review,service}.py`, prompt `audit_review/v1`, audit documents + stale detection in the package, `run_design_stage` refactor (design nodes and audit share it), audit feedback suffix in `run_stage`, settings `audit_*`, `StageId` unchanged (AUDIT existed), status `audit_complete`.
+- Existing tests: none changed in meaning; test Script gained an `audit_review` route; new `tests/audit_helpers.py` holds stage outputs complete enough to need no auto-fix. Note: the minimal fake stage outputs used earlier are genuinely incomplete, and the audit correctly regenerates them.
+- Tests: 506 passed. ruff, ruff format, mypy strict (88 files) clean.
+- Mutation testing: 20 mutants; 3 survived first (builder-duplicate suppression, design-stage fixability filter, auto/human owner rule) -> tests added -> all killed.
+- NOT verified: any real-model behavior (does feedback actually make a model fix the output? does the reviewer find real defects or hallucinate?); false-positive rate of the heuristics on real specs; cost of a full remediation round (up to 6 LLM calls per round).

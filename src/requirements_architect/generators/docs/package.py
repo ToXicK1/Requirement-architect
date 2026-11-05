@@ -24,10 +24,11 @@ from requirements_architect.generators.docs.tasks import Plan, build_plan
 from requirements_architect.validation.traceability import TraceLink, to_csv
 
 # Documents the target structure names but that cannot honestly be produced yet.
-PENDING_DOCUMENTS = {
-    "10_VALIDATION/REQUIREMENTS_AUDIT.md": "needs the independent audit engine (not yet run)",
-    "10_VALIDATION/FINAL_READINESS_REPORT.md": "needs the audit result (not yet run)",
-}
+AUDIT_DOCUMENTS = (
+    "10_VALIDATION/REQUIREMENTS_AUDIT.md",
+    "10_VALIDATION/FINAL_READINESS_REPORT.md",
+)
+PENDING_DOCUMENTS = dict.fromkeys(AUDIT_DOCUMENTS, "the audit has not been run")
 
 _FOLDER_RE = re.compile(r"^\d{2}_[A-Z_]+/[A-Z0-9_]+\.md$")
 
@@ -93,12 +94,17 @@ def build_package(i: DocInputs) -> Package:
         *qa.render_infra(i),
         *implementation.render(i, plan),
         *validation.render(i, plan),
+        *validation.render_audit(i),
     ]
     paths = [d.path for d in parts]
     if len(paths) != len(set(paths)) or not all(_FOLDER_RE.match(p) for p in paths):
         raise ValueError("document paths are not unique or not well formed")
     docs = [Doc(d.path, d.title, md.join(_header(d, i), d.body), d.applicable) for d in parts]
-    pending = dict(PENDING_DOCUMENTS)
+    pending = (
+        {}
+        if i.audit
+        else dict.fromkeys(AUDIT_DOCUMENTS, i.audit_note or "the audit has not been run")
+    )
     docs.insert(0, Doc("README.md", "Documentation Package", _readme(docs, i, pending)))
 
     links = validation.all_links(i, plan)

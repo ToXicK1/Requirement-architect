@@ -81,3 +81,31 @@ async def test_failed_verification_leaves_no_output_and_no_version(tmp_path, mon
         assert (await st.repo.get_project(p.id)).status == "specifications_complete"
         monkeypatch.undo()
         assert (await svc.generate(p.id)).version == 1
+
+
+async def test_current_audit_is_included_and_stale_audit_is_not(tmp_path):
+    from requirements_architect.audit.service import AuditLimits, AuditService
+    from requirements_architect.schemas.qa import QaSpec
+
+    async with make_stack(tmp_path, Script(), research_factory=factory) as st:
+        p = await run_to_specs(st)
+        docs = DocumentationService(st.repo, tmp_path / "out")
+        first = await docs.generate(p.id)
+        assert "audit has not been run" in str(first.manifest.pending_documents)
+        assert not (first.directory / "10_VALIDATION/REQUIREMENTS_AUDIT.md").exists()
+
+        await AuditService(st.repo, st.gateway, AuditLimits(max_rounds=0, llm_review=False)).run(
+            p.id
+        )
+        second = await docs.generate(p.id)
+        assert second.manifest.pending_documents == {}
+        assert (second.directory / "10_VALIDATION/REQUIREMENTS_AUDIT.md").stat().st_size > 0
+        assert verify_directory(second.directory) == []
+
+        _, qa = await st.repo.get_latest_output(p.id, StageId.QA_DEPLOY, QaSpec)
+        await st.repo.save_stage_output(
+            p.id, StageId.QA_DEPLOY, qa
+        )  # specs changed after the audit
+        third = await docs.generate(p.id)
+        assert "stale" in str(third.manifest.pending_documents)
+        assert not (third.directory / "10_VALIDATION/FINAL_READINESS_REPORT.md").exists()

@@ -171,6 +171,7 @@ class Script:
     security: list[Any] = field(default_factory=lambda: [MINIMAL_SECURITY])
     ux: list[Any] = field(default_factory=lambda: [MINIMAL_UX])
     qa_deploy: list[Any] = field(default_factory=lambda: [MINIMAL_QA])
+    audit_review: list[Any] = field(default_factory=lambda: [{"findings": []}])
     calls: dict[str, int] = field(
         default_factory=lambda: {
             "understand": 0,
@@ -184,6 +185,7 @@ class Script:
             "security": 0,
             "ux": 0,
             "qa_deploy": 0,
+            "audit_review": 0,
         }
     )
     requests: list[LLMRequest] = field(default_factory=list)
@@ -199,6 +201,8 @@ class Script:
             stage = "research_synthesis"
         elif "writing a software requirements specification" in sysmsg:
             stage = "requirements"
+        elif "independent reviewer" in sysmsg:
+            stage = "audit_review"
         elif "designing the system architecture" in sysmsg:
             stage = "architecture"
         elif "selecting technologies" in sysmsg:

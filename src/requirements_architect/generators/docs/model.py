@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from requirements_architect.schemas.architecture import ArchitectureSpec
+from requirements_architect.schemas.audit import AuditReport
 from requirements_architect.schemas.dataapi import DataApiSpec
 from requirements_architect.schemas.qa import QaSpec
 from requirements_architect.schemas.requirements import RequirementsSpec
@@ -34,6 +35,8 @@ class DocInputs:
     generated_at: datetime
     # stage versions the package was built from: {stage name: version}
     source_versions: dict[str, int] = field(default_factory=dict)
+    audit: AuditReport | None = None  # only a current (non-stale) audit is passed in
+    audit_note: str = ""  # why there is no audit document (not run / stale)
 
     @property
     def pending_approvals(self) -> int:

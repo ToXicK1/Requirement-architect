@@ -151,3 +151,21 @@ def make_inputs(
         package_version=1,
         generated_at=datetime(2026, 1, 2, 3, 4, tzinfo=UTC),
     )
+
+
+def make_specset(inp: DocInputs | None = None):
+    """Deep-copied SpecSet so tests can mutate specs freely."""
+    from requirements_architect.audit.specset import SpecSet
+
+    inp = inp or make_inputs()
+    return SpecSet(
+        brief=inp.brief.model_copy(deep=True),
+        requirements=inp.requirements.model_copy(deep=True),
+        architecture=inp.architecture.model_copy(deep=True),
+        technology=inp.technology.model_copy(deep=True),
+        data_api=inp.data_api.model_copy(deep=True),
+        security=inp.security.model_copy(deep=True),
+        ux=inp.ux.model_copy(deep=True),
+        qa=inp.qa.model_copy(deep=True),
+        research=inp.research,
+    )

@@ -115,4 +115,6 @@ def test_readme_index_is_not_repeated_inside_the_pdf():
     _, res = render()
     text = "\n".join(pages_text(res.data))
     assert "README.md" not in text  # the index is replaced by the table of contents
-    assert "REQUIREMENTS_AUDIT.md" in text and "not yet run" in text  # pending docs are disclosed
+    assert (
+        "REQUIREMENTS_AUDIT.md" in text and "audit has not been run" in text
+    )  # pending docs are disclosed

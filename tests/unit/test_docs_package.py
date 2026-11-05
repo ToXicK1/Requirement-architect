@@ -174,3 +174,49 @@ def test_requirements_needing_confirmation_are_listed_only_when_flagged():
     srs = by_path(build_package(make_inputs(reqs)))["02_SOFTWARE_REQUIREMENTS/SRS.md"].body
     section = srs.split("## Requirements needing confirmation")[1].split("##")[0]
     assert "FR-001" in section and "FR-002" not in section
+
+
+def _with_audit(inp, audit):
+    return inp.__class__(**{**inp.__dict__, "audit": audit})
+
+
+def test_audit_documents_appear_only_when_an_audit_exists_and_never_claim_approval():
+    from requirements_architect.audit.engine import audit_deterministic
+    from tests.doc_helpers import make_specset
+
+    inp = make_inputs()
+    rep = audit_deterministic(make_specset(inp))
+    pkg = build_package(_with_audit(inp, rep))
+    docs = by_path(pkg)
+    assert pkg.pending == {}
+    audit = docs["10_VALIDATION/REQUIREMENTS_AUDIT.md"].body
+    ready = docs["10_VALIDATION/FINAL_READINESS_REPORT.md"].body
+    assert rep.verdict.value in audit and "Quality gates" in audit and "Remediation tasks" in audit
+    assert "NOT approval" in ready and "no human has approved" in ready
+    assert all(g.name in audit for g in rep.gates)
+    handoff = docs["09_IMPLEMENTATION/CODING_AGENT_INSTRUCTIONS.md"].body
+    assert "Audit verdict" in handoff
+    assert sum(1 for d in pkg.docs if d.path.startswith("10_VALIDATION/")) == 4
+
+
+def test_failed_audit_is_reported_as_not_ready_in_readiness_report():
+    from requirements_architect.audit.engine import audit_deterministic
+    from tests.doc_helpers import make_specset
+
+    inp = make_inputs()
+    s = make_specset(inp)
+    s.qa.test_cases = []
+    rep = audit_deterministic(s)
+    body = by_path(build_package(_with_audit(inp, rep)))[
+        "10_VALIDATION/FINAL_READINESS_REPORT.md"
+    ].body
+    assert "**not_ready**" in body and "Do not hand this package" in body
+    assert "no_blockers" in body
+
+
+def test_missing_audit_note_is_carried_into_pending_reason_and_handoff():
+    inp = make_inputs()
+    inp = inp.__class__(**{**inp.__dict__, "audit_note": "the audit is stale: x"})
+    pkg = build_package(inp)
+    assert all("stale" in v for v in pkg.pending.values())
+    assert "has not been run" in by_path(pkg)["09_IMPLEMENTATION/CODING_AGENT_INSTRUCTIONS.md"].body

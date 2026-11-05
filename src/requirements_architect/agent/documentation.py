@@ -24,6 +24,7 @@ from requirements_architect.generators.docs.model import ROOT, DocInputs
 from requirements_architect.generators.docs.package import build_package
 from requirements_architect.generators.docs.pdf import render_pdf
 from requirements_architect.schemas.architecture import ArchitectureSpec
+from requirements_architect.schemas.audit import AuditReport
 from requirements_architect.schemas.dataapi import DataApiSpec
 from requirements_architect.schemas.qa import QaSpec
 from requirements_architect.schemas.requirements import RequirementsSpec
@@ -40,7 +41,11 @@ from requirements_architect.schemas.ux import UxSpec
 from requirements_architect.storage.repository import Repository
 
 _PROJECT_ID = re.compile(r"^[0-9a-fA-F\-]{36}$")
-_ALLOWED_STATUS = {WorkflowStatus.SPECS_COMPLETE.value, WorkflowStatus.DOCUMENTS_COMPLETE.value}
+_ALLOWED_STATUS = {
+    WorkflowStatus.SPECS_COMPLETE.value,
+    WorkflowStatus.AUDIT_COMPLETE.value,
+    WorkflowStatus.DOCUMENTS_COMPLETE.value,
+}
 
 
 class DocumentationError(RuntimeError):
@@ -88,6 +93,9 @@ class DocumentationService:
         research = await self._repo.get_latest_output(project_id, StageId.RESEARCH, ResearchReport)
         if research is not None:
             deps.append(Dependency(stage_id=StageId.RESEARCH, version=research[0].version))
+        audit, audit_note = await self._current_audit(
+            project_id, {d.stage_id.value: d.version for d in deps}
+        )
         previous = await self._repo.list_versions(project_id, StageId.DOCUMENTATION)
         inputs = DocInputs(
             project_id=project_id,
@@ -105,8 +113,24 @@ class DocumentationService:
             package_version=(previous[-1] if previous else 0) + 1,
             generated_at=datetime.now(UTC).replace(second=0, microsecond=0),
             source_versions={d.stage_id.value: d.version for d in deps},
+            audit=audit,
+            audit_note=audit_note,
         )
         return inputs, deps
+
+    async def _current_audit(
+        self, project_id: str, current: dict[str, int]
+    ) -> tuple[AuditReport | None, str]:
+        """The latest audit, unless it is missing or was run on older specifications."""
+        got = await self._repo.get_latest_output(project_id, StageId.AUDIT, AuditReport)
+        if got is None:
+            return None, "the audit has not been run"
+        stale = sorted(k for k, v in got[1].source_versions.items() if current.get(k, v) != v)
+        if stale:
+            return None, "the audit is stale: these stages changed after it ran: " + ", ".join(
+                stale
+            )
+        return got[1], ""
 
     async def generate(self, project_id: str) -> GeneratedPackage:
         if not _PROJECT_ID.match(project_id):

@@ -249,6 +249,7 @@ def _handoff(i: DocInputs, plan: Plan) -> str:
             "Known problems in the specification",
             md.table(["Stage", "Severity", "Code", "Message"], errors)
             or "No error-severity issues were recorded. Warnings are listed in each document.",
+            *_audit_block(i),
         ),
         md.section(
             "Repository development plan",
@@ -262,3 +263,19 @@ def _handoff(i: DocInputs, plan: Plan) -> str:
             ),
         ),
     )
+
+
+def _audit_block(i: DocInputs) -> list[str]:
+    a = i.audit
+    if a is None:
+        return [
+            "The documentation audit has not been run on this package. " + md.text(i.audit_note)
+        ]
+    open_items = [f for f in a.findings if f.severity.value in {"blocker", "major"}]
+    return [
+        f"Audit verdict: **{a.verdict.value}**. See `10_VALIDATION/REQUIREMENTS_AUDIT.md`.",
+        md.table(
+            ["ID", "Severity", "Finding"], [(f.id, f.severity.value, f.message) for f in open_items]
+        )
+        or "The audit recorded no blocker or major findings.",
+    ]

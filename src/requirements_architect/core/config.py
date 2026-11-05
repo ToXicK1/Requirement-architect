@@ -40,6 +40,12 @@ class Settings(BaseSettings):
     # JSON object: {"model-name": {"input_per_mtok": "3.0", "output_per_mtok": "15.0"}}
     llm_price_table_json: str = "{}"
 
+    # --- Audit (Stage 11): bounded so it can never regenerate endlessly ---
+    audit_max_rounds: int = Field(default=2, ge=0, le=5)
+    audit_max_stage_runs: int = Field(default=12, ge=0, le=60)
+    audit_max_major: int = Field(default=0, ge=0)
+    audit_llm_review: bool = True
+
     # --- Research (Stage 3). All optional; absence is reported as a limitation, never faked. ---
     research_enabled: bool = True
     brave_api_key: SecretStr = SecretStr("")
