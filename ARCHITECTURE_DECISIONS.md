@@ -62,3 +62,16 @@ Risk level is computed from likelihood x impact; critical -> error issue, high/c
 `validation/secrets.scrub` redacts secret-looking text in test data, deployment text, CI steps and env-var purposes and records an error issue. `EnvVar` has no value field, so a value cannot be represented. The scrubber is a heuristic and can miss unusual formats.
 ## ADR-029: Design nodes are table-driven; the chain ends at `specifications_complete`
 `DESIGN_STAGES` lists stage, model, generator and dependencies; each node loads context from persisted outputs (not graph state), records the latest upstream versions as dependencies, and only the last sets the status. Retry resumes at the failed node via the checkpointer; earlier stages are not re-run.
+
+## ADR-030: Documents are rendered by code from persisted specs; the LLM writes no document text
+Every document is a deterministic function of stage outputs, so documents cannot contradict the specs and every id in a document exists. Alternative (LLM-written prose): rejected for consistency and injection risk.
+## ADR-031: All model/user text passes through `md.text/cell/inline/fence`
+These collapse whitespace, neutralize HTML angle brackets and block-start syntax, escape table pipes and lengthen code fences, so a requirement cannot add headings, tables or HTML. The PDF escapes XML again before ReportLab markup.
+## ADR-032: Audit documents are declared pending, never faked
+REQUIREMENTS_AUDIT.md and FINAL_READINESS_REPORT.md need the Phase 8 audit engine. They are listed in README, manifest and PDF as not generated. The spec forbids empty placeholder documents.
+## ADR-033: Package = in-memory file map -> manifest -> staged write -> verify -> atomic rename
+`assemble` builds all bytes and a SHA-256 manifest; `write_files` rejects unsafe paths and symlink escapes; the service writes to a staging directory, re-reads and verifies files and the ZIP, and only then renames into `vN`. A failed verification leaves no output and consumes no version number.
+## ADR-034: Implementation tasks are derived by code
+`build_plan` creates tasks from components, entities, endpoints, controls, screens and test cases, orders them by phase then dependency (cycles reported and broken), and emits `task` trace links. The coding-agent handoff cites only these ids.
+## ADR-035: PDF diagrams are Mermaid source, not rendered images (known gap)
+A Mermaid renderer needs Chromium/mmdc in the runtime image. Until Phase 10 decides that, the PDF shows diagram source and the ZIP carries `diagrams/*.mmd`.

@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", pattern="^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$")
     database_url: str = "sqlite+aiosqlite:///./requirements_architect.db"
     secret_key: SecretStr = SecretStr("")
+    output_dir: str = "./data/output"  # generated documentation packages are written here
 
     # --- LLM gateway (provider-independent; no default vendor model is assumed) ---
     llm_provider: Literal["anthropic", "openai_compat"] | None = None

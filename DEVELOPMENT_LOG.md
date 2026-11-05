@@ -43,3 +43,11 @@
 - Tests: 406 passed. ruff, ruff format, mypy strict (63 files) clean. Migration test (`alembic check`) is part of the suite; no schema change.
 - Mutation testing: step 1 10/10, step 2 8/8 (+ Mermaid sanitizer mutant), step 4 10/10 killed after two surviving mutants (latest-version dependency, empty redaction marker) exposed weak tests that were then strengthened.
 - NOT verified: any real-model output for stages 5-10; Mermaid rendering in a real parser; OpenAPI against a full validator; Postgres; Docker; live network. A standalone `alembic check` on a fresh DB reported "not up to date" until upgraded (expected; the test upgrades first).
+
+## Session 7 - Phase 7 documentation generation
+- Built: `generators/docs/*` (md helpers, 11 renderers, task planner, package assembler, bundle/manifest/ZIP, ReportLab PDF), `agent/documentation.py` service, `StageId.DOCUMENTATION`, status `documents_complete`, `output_dir` setting, reportlab dependency (pypdf dev-only).
+- No schema change (stage ids are strings); alembic untouched.
+- Tests: 466 passed. ruff, ruff format, mypy strict (81 files) clean.
+- Mutation testing: 18 mutants; 3 survived first (duplicate-path guard, README skip in PDF, needs-confirmation list) and exposed weak tests -> tests added -> all killed; 2 equivalent survivors (redundant `..` check behind the path regex; ZIP epoch literal equal to the constant).
+- Visual check: rendered cover, TOC and body pages to PNG and inspected them.
+- NOT verified: a real coding agent consuming CODING_AGENT_INSTRUCTIONS; PDF in other viewers; non-Latin text beyond the font's coverage (unsupported characters become '?' and are reported); Mermaid correctness in a real parser; large projects (hundreds of requirements) for PDF time/size; Docker image has the fonts it needs (Vera ships with ReportLab, DejaVu used if present).

@@ -14,10 +14,11 @@ dependencies = [
   "structlog>=24.1",
   "langgraph>=1.0",
   "langgraph-checkpoint-sqlite>=3.0",
+  "reportlab>=4.0",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-asyncio", "httpx", "ruff", "mypy"]
+dev = ["pytest", "pytest-asyncio", "httpx", "ruff", "mypy", "pypdf"]
 postgres = ["asyncpg>=0.29"]
 
 [build-system]
@@ -43,3 +44,11 @@ src = ["src", "tests"]
 [tool.mypy]
 strict = true
 plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["reportlab", "reportlab.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["requirements_architect.generators.docs.pdf"]
+disallow_subclassing_any = false  # ReportLab is untyped

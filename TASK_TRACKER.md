@@ -52,3 +52,13 @@ Statuses: NOT_STARTED, IN_PROGRESS, BLOCKED, IMPLEMENTED, TESTED, VERIFIED
 | P6-06 | Workflow: research -> requirements -> 6 design nodes -> `specifications_complete` (table-driven nodes, deps recorded, retry resumes at failed stage) | H | TESTED | P6-05 | scripted LLM only |
 | P6-07 | Live run of stages 5-10 with a real LLM | H | BLOCKED | P6-06,P2-07 | needs LLM key |
 | P6-08 | Cross-stage consistency audit / remediation | M | NOT_STARTED | P8 | issues are reported, not auto-fixed |
+| P7-01 | Markdown renderers for the 11-folder package (N/A documents carry a reason; hostile text neutralized) | H | TESTED | P6 | deterministic, no LLM; 46 documents + README index |
+| P7-02 | Deterministic task planner (dependency order, cycle-tolerant) + task trace links | H | TESTED | P7-01 | tasks derived from specs, not invented |
+| P7-03 | CODING_AGENT_INSTRUCTIONS (13 required topics), roadmap, task breakdown, definition of done | H | TESTED | P7-02 | never run by a real coding agent |
+| P7-04 | Traceability matrix + risk register documents; CSV export | H | TESTED | P7-02 | NFR coverage reported by QA stage, not the matrix |
+| P7-05 | Manifest (SHA-256), safe writer (no traversal/symlink escape), directory + ZIP verification, deterministic ZIP | H | TESTED | P7-01 | 1 equivalent mutant (redundant ".." check) |
+| P7-06 | PDF (ReportLab): cover, TOC, page numbers, tables, references, pending-docs disclosure | H | TESTED | P7-01 | inspected visually; Mermaid shown as source, NOT rendered as pictures |
+| P7-07 | DocumentationService (staged write, verify, versioned manifest, status) | H | TESTED | P7-05,P7-06 | |
+| P7-08 | Render Mermaid diagrams into the PDF | M | NOT_STARTED | P10 | needs a Mermaid renderer (mmdc/Chromium) in the image |
+| P7-09 | REQUIREMENTS_AUDIT.md and FINAL_READINESS_REPORT.md | H | NOT_STARTED | P8 | declared as pending in manifest, PDF and README; not faked |
+| P7-10 | Expose generation/download through API and CLI | H | NOT_STARTED | P9 | service only, no endpoint yet |

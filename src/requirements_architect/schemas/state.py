@@ -23,6 +23,7 @@ class StageId(StrEnum):
     UX = "stage_09_ux"
     QA_DEPLOY = "stage_10_testing_deployment"
     AUDIT = "stage_11_audit"
+    DOCUMENTATION = "stage_12_documentation"
 
 
 class OutputStatus(StrEnum):
@@ -39,6 +40,7 @@ class WorkflowStatus(StrEnum):
     RESEARCH_COMPLETE = "research_complete"
     REQUIREMENTS_COMPLETE = "requirements_complete"
     SPECS_COMPLETE = "specifications_complete"
+    DOCUMENTS_COMPLETE = "documents_complete"
     FAILED = "failed"
 
 

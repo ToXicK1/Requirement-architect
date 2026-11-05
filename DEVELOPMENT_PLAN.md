@@ -9,7 +9,7 @@ Phases follow the master instruction (Section 17). Completion = tests pass AND b
 | 4 | Research | Adapters, SSRF-safe fetcher, evidence registry |
 | 5 | Requirements engineering | FR/NFR generation, IDs, traceability |
 | 6 | Technical specifications | Architecture, tech, DB/API, security, UI/UX, QA/deploy stages (DONE on scripted LLM; live run blocked on key) |
-| 7 | Documentation generation | Markdown tree, PDF, Mermaid, manifest, ZIP |
+| 7 | Documentation generation | Markdown tree, PDF, manifest, ZIP (DONE with scripted inputs; audit docs pending Phase 8; diagrams are source only) |
 | 8 | Audit engine | Deterministic + LLM validators, bounded remediation |
 | 9 | Application interface | Auth, dashboard, approvals, downloads, CLI |
 | 10 | Production hardening | Full tests, security scan, backup/recovery docs, deployment verification |
