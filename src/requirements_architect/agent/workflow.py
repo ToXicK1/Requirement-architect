@@ -1,6 +1,8 @@
-"""LangGraph workflow for stages 1-2 (understanding + clarification).
+"""LangGraph workflow for the analysis stages.
 
 Graph:  understand -> clarify -> (gate <-> gate | clarify | finish)
+        [with a ResearchService] -> research -> requirements -> architecture -> technology
+        -> data_api -> security -> ux -> qa_deploy -> END
 
 * `gate` is the only node that calls interrupt(); it has no LLM side effects, because LangGraph
   re-executes an interrupted node from its start when resumed.
@@ -18,6 +20,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import interrupt
 
+from requirements_architect.agent.design_nodes import DESIGN_STAGES, make_design_node
 from requirements_architect.agent.stages.clarification import run_clarification
 from requirements_architect.agent.stages.requirements import generate_requirements
 from requirements_architect.agent.stages.understanding import run_problem_understanding
@@ -49,6 +52,7 @@ class WorkflowState(TypedDict, total=False):
     status: str
     research_version: int
     requirements_version: int
+    design_versions: dict[str, int]
 
 
 def build_workflow(
@@ -191,7 +195,13 @@ def build_workflow(
         g.add_edge("finish", "research")
         g.add_node("requirements", do_requirements)
         g.add_edge("research", "requirements")
-        g.add_edge("requirements", END)
+        previous = "requirements"
+        for i, stage in enumerate(DESIGN_STAGES):
+            node = make_design_node(gateway, repo, stage, last=i == len(DESIGN_STAGES) - 1)
+            g.add_node(stage.name, node)  # type: ignore[arg-type]
+            g.add_edge(previous, stage.name)
+            previous = stage.name
+        g.add_edge(previous, END)
     else:
         g.add_edge("finish", END)
     return g.compile(checkpointer=checkpointer)

@@ -49,3 +49,16 @@ Honours "do not invent business requirements": inferred rules stay visible, de-d
 Later stages only append links and extend `required`; no schema change needed. CSV export neutralizes leading = + - @ because names are model/user text opened in spreadsheets.
 ## ADR-023: Requirements node exists only when research is configured
 It consumes the persisted research report, so the graph is research -> requirements. Without a ResearchService the workflow still ends at `ready_for_research` (unchanged behaviour; existing tests kept).
+
+## ADR-024: Design stages share one pattern: Raw* model output -> code builder -> versioned spec with SpecIssues
+Same "model proposes, code decides" rule as Phase 5. The model returns local keys (C1, T1, E1, EP1, SC1, TH1, FL1, SCR1, TC1); code assigns C-/TECH-/E-/EP-/SC-/TH-/FL-/SCR-/TC- ids, drops references it cannot resolve and reports them as issues. Alternative: trust model ids (rejected: collisions, dangling refs).
+## ADR-025: Diagrams and OpenAPI are rendered by code from validated structures
+Mermaid text is built by deterministic functions with label sanitization (no model-authored Mermaid). OpenAPI 3.1 is built by code; only a structural validator exists, so we make no claim of full spec validity.
+## ADR-026: Technology versions/licenses come only from registry evidence
+Status is confirmed/differs/unverified/not_specified; a model-stated version is never presented as verified.
+## ADR-027: Security risk and compliance wording are controlled by code
+Risk level is computed from likelihood x impact; critical -> error issue, high/critical -> approval candidate. Compliance claims are regex-flagged and a fixed disclaimer is attached. The stage produces analysis input, not an audit or certification.
+## ADR-028: Secrets never enter documents
+`validation/secrets.scrub` redacts secret-looking text in test data, deployment text, CI steps and env-var purposes and records an error issue. `EnvVar` has no value field, so a value cannot be represented. The scrubber is a heuristic and can miss unusual formats.
+## ADR-029: Design nodes are table-driven; the chain ends at `specifications_complete`
+`DESIGN_STAGES` lists stage, model, generator and dependencies; each node loads context from persisted outputs (not graph state), records the latest upstream versions as dependencies, and only the last sets the status. Retry resumes at the failed node via the checkpointer; earlier stages are not re-run.

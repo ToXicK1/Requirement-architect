@@ -8,7 +8,7 @@ Phases follow the master instruction (Section 17). Completion = tests pass AND b
 | 3 | Core agent | Typed project state, LangGraph workflow, clarification pause/resume, checkpoints |
 | 4 | Research | Adapters, SSRF-safe fetcher, evidence registry |
 | 5 | Requirements engineering | FR/NFR generation, IDs, traceability |
-| 6 | Technical specifications | Architecture, tech, DB/API, security, UI/UX, QA/deploy stages |
+| 6 | Technical specifications | Architecture, tech, DB/API, security, UI/UX, QA/deploy stages (DONE on scripted LLM; live run blocked on key) |
 | 7 | Documentation generation | Markdown tree, PDF, Mermaid, manifest, ZIP |
 | 8 | Audit engine | Deterministic + LLM validators, bounded remediation |
 | 9 | Application interface | Auth, dashboard, approvals, downloads, CLI |

@@ -38,6 +38,7 @@ class WorkflowStatus(StrEnum):
     READY_FOR_RESEARCH = "ready_for_research"
     RESEARCH_COMPLETE = "research_complete"
     REQUIREMENTS_COMPLETE = "requirements_complete"
+    SPECS_COMPLETE = "specifications_complete"
     FAILED = "failed"
 
 

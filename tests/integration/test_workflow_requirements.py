@@ -54,8 +54,8 @@ async def test_full_flow_persists_spec_with_dependencies(tmp_path):
         snap = await st.service.resume(
             p.id, [ClarificationAnswer(question_id="Q-001", answer="EU only")]
         )
-        assert snap.status == "requirements_complete"
-        assert (await st.repo.get_project(p.id)).status == "requirements_complete"
+        assert snap.status == "specifications_complete"
+        assert (await st.repo.get_project(p.id)).status == "specifications_complete"
         meta, spec = await st.repo.get_latest_output(p.id, StageId.REQUIREMENTS, RequirementsSpec)
         assert meta.depends_on == [
             Dependency(stage_id=StageId.PROBLEM_UNDERSTANDING, version=1),
@@ -76,7 +76,7 @@ async def test_failure_is_retryable_without_redoing_earlier_stages(tmp_path):
             await st.service.start(p.id)
         assert (await st.service.snapshot(p.id)).status == "failed"
         assert await st.repo.list_versions(p.id, StageId.REQUIREMENTS) == []
-        assert (await st.service.retry(p.id)).status == "requirements_complete"
+        assert (await st.service.retry(p.id)).status == "specifications_complete"
         assert (script.calls["understand"], script.calls["research_plan"]) == (1, 1)
         assert await st.repo.list_versions(p.id, StageId.REQUIREMENTS) == [1]
         assert await st.repo.list_versions(p.id, StageId.RESEARCH) == [1]

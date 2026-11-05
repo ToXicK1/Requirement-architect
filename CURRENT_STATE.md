@@ -1,8 +1,10 @@
 # Current State
-- **Phase:** 5 (requirements engineering) implemented and tested; next Phase 6 (technical specifications).
-- **Completed:** P1-01..05, P2-01..06, P3-01..07, P4-01..07, P5-01..06 (TESTED).
-- **Workflow today:** understand -> clarify -> (pause for answers) -> finish -> research -> requirements -> `requirements_complete` (research and requirements nodes only when a ResearchService is supplied; otherwise ends `ready_for_research`).
+- **Phase:** 6 (technical specifications, stages 5-10) implemented and tested; next Phase 7 (document generation).
+- **Completed:** P1-01..05, P2-01..06, P3-01..07, P4-01..07, P5-01..06, P6-01..06 (TESTED).
+- **Workflow today:** understand -> clarify -> (pause for answers) -> finish -> research -> requirements -> architecture -> technology -> data_api -> security -> ux -> qa_deploy -> `specifications_complete` (research onward only when a ResearchService is supplied; otherwise ends `ready_for_research`).
 - **Known issues / unverified:**
+  - Stages 5-10 never run on a real model; Mermaid output not parsed by real Mermaid; OpenAPI only structurally validated; secret scrubber is a heuristic; security output is analysis input, not an audit.
+  - Approval candidates are collected but there is no approval flow yet (Phase 9). Task trace links do not exist yet.
   - Requirements stage never run on a real model. Whether models respect the key/objective/citation rules is unknown; build_spec reports violations as issues rather than failing. NFR category gaps and uncited external facts are reported, not auto-remediated (Phase 8).
   - Traceability currently links only objectives and stories; component/entity/endpoint/control/test/task links arrive with Phase 6+. `analyze()` must be called with the extended `required` kinds then.
   - A sandbox reset happened between sessions: always restore from the latest tarball and re-verify.
@@ -19,6 +21,6 @@
   cd requirements-architect && python3 -m venv .venv && . .venv/bin/activate
   pip install -e ".[dev]" && pytest -q && ruff check . && mypy src
   ```
-- **Last verified results:** pytest 315 passed; ruff + format clean; mypy strict clean (44 files); no migration change this phase.
+- **Last verified results:** pytest 406 passed; ruff + format clean; mypy strict clean (63 files); no migration change.
 - **External deps needed:** LLM key (live runs); optional Brave key (web search); optional GitHub token; PostgreSQL/Docker host.
-- **Next actions:** Phase 6: stages 5-10 as Pydantic models + prompts + nodes, each consuming the persisted RequirementsSpec and research report. Start with architecture (components with ids, decisions with rationale/alternatives/trade-offs, Mermaid diagrams validated deterministically), then technology (versions only from research/registry facts, never from memory), DB/API (entities and endpoints with ids), security, UX, QA/deploy (test cases mapped to requirement ids). Each stage must emit trace links so `analyze()` can flag requirements without design/test coverage and orphan components/endpoints/tests. Consider a live smoke test of the PyPI/npm adapters first, since those hosts appeared reachable.
+- **Next actions:** Phase 7: Markdown document tree from the persisted specs, PDF rendering, manifest with hashes, ZIP export, CODING_AGENT_INSTRUCTIONS.md handoff (with task links added to traceability), and a traceability matrix document. Then Phase 8 audit engine.

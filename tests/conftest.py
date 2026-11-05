@@ -46,6 +46,105 @@ MINIMAL_REQUIREMENTS: dict[str, Any] = {
 }
 
 
+MINIMAL_ARCH: dict[str, Any] = {
+    "selected_pattern": "modular_monolith",
+    "pattern_evaluations": [
+        {"pattern": "modular_monolith", "suitable": True, "rationale": "simple"},
+        {"pattern": "microservices", "suitable": False, "rationale": "overkill"},
+    ],
+    "components": [
+        {
+            "key": "C1",
+            "name": "Core",
+            "kind": "module",
+            "responsibility": "does it",
+            "requirement_ids": ["FR-001"],
+        }
+    ],
+}
+MINIMAL_TECH: dict[str, Any] = {
+    "technologies": [
+        {
+            "key": "T1",
+            "name": "Python",
+            "category": "backend",
+            "purpose": "p",
+            "reason": "r",
+            "alternatives": ["Go"],
+            "advantages": ["a"],
+            "disadvantages": ["d"],
+            "license": "PSF",
+            "component_ids": ["C-001"],
+        }
+    ]
+}
+MINIMAL_DATA_API: dict[str, Any] = {
+    "entities": [
+        {
+            "key": "E1",
+            "name": "users",
+            "description": "d",
+            "fields": [{"name": "id", "type": "uuid", "primary_key": True}],
+            "requirement_ids": ["FR-001"],
+        }
+    ],
+    "endpoints": [
+        {
+            "key": "EP1",
+            "method": "GET",
+            "path": "/users",
+            "purpose": "list",
+            "authentication": "bearer",
+            "authorization": "admin",
+            "error_responses": [{"status": 401, "meaning": "no token"}],
+            "requirement_ids": ["FR-001"],
+            "entity_keys": ["E1"],
+        }
+    ],
+}
+MINIMAL_SECURITY: dict[str, Any] = {
+    "is_ai_project": False,
+    "handles_sensitive_data": False,
+    "threats": [
+        {
+            "key": "TH1",
+            "title": "t",
+            "category": "spoofing",
+            "asset": "accounts",
+            "description": "d",
+            "likelihood": "medium",
+            "impact": "medium",
+            "control_keys": ["SC1"],
+        }
+    ],
+    "controls": [
+        {
+            "key": "SC1",
+            "name": "Auth",
+            "description": "d",
+            "area": "authentication",
+            "requirement_ids": ["FR-001"],
+        }
+    ],
+}
+MINIMAL_UX: dict[str, Any] = {"has_ui": False, "interface_note": "API only"}
+MINIMAL_QA: dict[str, Any] = {
+    "strategy": [{"test_type": "unit", "approach": "pytest"}],
+    "test_cases": [
+        {
+            "key": "TC1",
+            "requirement_ids": ["FR-001"],
+            "scenario": "s",
+            "steps": ["do"],
+            "expected_result": "ok",
+            "priority": "must",
+            "test_type": "unit",
+        }
+    ],
+    "deployment": {},
+}
+
+
 def q(qid: str, text: str, blocking: bool = True) -> dict[str, Any]:
     return {"id": qid, "question": text, "reason": "r", "impact": "i", "blocking": blocking}
 
@@ -66,6 +165,12 @@ class Script:
         default_factory=lambda: [{"feasibility_summary": "feasible", "findings": []}]
     )
     requirements: list[Any] = field(default_factory=lambda: [MINIMAL_REQUIREMENTS])
+    architecture: list[Any] = field(default_factory=lambda: [MINIMAL_ARCH])
+    technology: list[Any] = field(default_factory=lambda: [MINIMAL_TECH])
+    data_api: list[Any] = field(default_factory=lambda: [MINIMAL_DATA_API])
+    security: list[Any] = field(default_factory=lambda: [MINIMAL_SECURITY])
+    ux: list[Any] = field(default_factory=lambda: [MINIMAL_UX])
+    qa_deploy: list[Any] = field(default_factory=lambda: [MINIMAL_QA])
     calls: dict[str, int] = field(
         default_factory=lambda: {
             "understand": 0,
@@ -73,6 +178,12 @@ class Script:
             "research_plan": 0,
             "research_synthesis": 0,
             "requirements": 0,
+            "architecture": 0,
+            "technology": 0,
+            "data_api": 0,
+            "security": 0,
+            "ux": 0,
+            "qa_deploy": 0,
         }
     )
     requests: list[LLMRequest] = field(default_factory=list)
@@ -88,6 +199,18 @@ class Script:
             stage = "research_synthesis"
         elif "writing a software requirements specification" in sysmsg:
             stage = "requirements"
+        elif "designing the system architecture" in sysmsg:
+            stage = "architecture"
+        elif "selecting technologies" in sysmsg:
+            stage = "technology"
+        elif "designing the database and API" in sysmsg:
+            stage = "data_api"
+        elif "security and privacy analysis" in sysmsg:
+            stage = "security"
+        elif "designing the user experience" in sysmsg:
+            stage = "ux"
+        elif "defining the test and deployment strategy" in sysmsg:
+            stage = "qa_deploy"
         else:
             stage = "clarify"
         queue = getattr(self, stage)

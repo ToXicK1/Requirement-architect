@@ -44,4 +44,11 @@ Statuses: NOT_STARTED, IN_PROGRESS, BLOCKED, IMPLEMENTED, TESTED, VERIFIED
 | P5-06 | Workflow node (research -> requirements), retry, deps recorded | H | TESTED | P5-05 | node exists only when a ResearchService is supplied |
 | P5-07 | Live requirements run with a real LLM | H | BLOCKED | P5-06,P2-07 | needs LLM key |
 | P5-08 | Remediation of NFR-category gaps / uncited facts | M | NOT_STARTED | P8 | issues are reported, not auto-fixed; audit engine owns remediation |
-| P6-* | Architecture, technology, DB/API, security, UX, QA/deploy stages | H | NOT_STARTED | P5 | will add component/entity/endpoint/control/test/task trace links |
+| P6-01 | Architecture stage (components, decisions, patterns, deterministic Mermaid context/component/dataflow diagrams) | H | TESTED | P5 | scripted LLM only; Mermaid text never rendered by a real Mermaid parser |
+| P6-02 | Technology stage (registry-verified versions/licenses; no versions from memory) + DB/API stage (entities, endpoints, ER diagram, code-built OpenAPI 3.1) | H | TESTED | P6-01 | OpenAPI checked by a structural validator only, not full spec validation |
+| P6-03 | Security stage (STRIDE + AI threats, code-computed risk, compliance-claim guard) + UX stage (personas, flows, screens, states) | H | TESTED | P6-02 | not a security review; disclaimer is fixed text |
+| P6-04 | QA/deploy stage (test cases map to real requirement ids, strategy coverage, env vars name-only, secret scrubber) | H | TESTED | P6-03 | scrubber is regex heuristic |
+| P6-05 | Full-chain traceability (component/entity/endpoint/control/test links) + approval-candidate collection | H | TESTED | P6-04 | task links arrive with Phase 7 |
+| P6-06 | Workflow: research -> requirements -> 6 design nodes -> `specifications_complete` (table-driven nodes, deps recorded, retry resumes at failed stage) | H | TESTED | P6-05 | scripted LLM only |
+| P6-07 | Live run of stages 5-10 with a real LLM | H | BLOCKED | P6-06,P2-07 | needs LLM key |
+| P6-08 | Cross-stage consistency audit / remediation | M | NOT_STARTED | P8 | issues are reported, not auto-fixed |

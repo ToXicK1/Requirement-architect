@@ -35,3 +35,11 @@
 - Mutation testing: 11/11 killed (finding filter, assumption flagging, cycle detection, NFR status, CSV guard, dangling links, approve validation, dependency metadata, prompt delimiting, orphan stories, uncited-fact flag).
 - NOT verified: any real-model output (prompt quality, whether models obey the key/objective/citation rules); NFR category completeness in practice; Postgres; live network.
 - Observation (not acted on): a network probe showed pypi.org and registry.npmjs.org reachable (HTTP 200), api.github.com returned 403, example.com DNS failed. A live smoke test of the PyPI/npm adapters may be possible; not attempted this session.
+
+## Session 6 - Phase 6 technical specifications (stages 5-10)
+- Built: architecture, technology, DB/API, security, UX, QA/deploy stages (schemas, prompts, builders, generators), Mermaid and OpenAPI generators, secret scrubber, full-chain traceability, table-driven workflow nodes, `specifications_complete` status.
+- Existing tests changed deliberately: final status in research/requirements workflow tests is now `specifications_complete`; test Script gained routes and minimal valid defaults for the six new stages.
+- Pushed to GitHub (ToXicK1/Requirement-architect, main) after the user installed the Claude GitHub App.
+- Tests: 406 passed. ruff, ruff format, mypy strict (63 files) clean. Migration test (`alembic check`) is part of the suite; no schema change.
+- Mutation testing: step 1 10/10, step 2 8/8 (+ Mermaid sanitizer mutant), step 4 10/10 killed after two surviving mutants (latest-version dependency, empty redaction marker) exposed weak tests that were then strengthened.
+- NOT verified: any real-model output for stages 5-10; Mermaid rendering in a real parser; OpenAPI against a full validator; Postgres; Docker; live network. A standalone `alembic check` on a fresh DB reported "not up to date" until upgraded (expected; the test upgrades first).
