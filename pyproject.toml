@@ -17,6 +17,9 @@ dependencies = [
   "reportlab>=4.0",
 ]
 
+[project.scripts]
+requirements-architect = "requirements_architect.cli:main"
+
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio", "httpx", "ruff", "mypy", "pypdf"]
 postgres = ["asyncpg>=0.29"]
@@ -30,6 +33,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "requirements_architect.agent" = ["prompts/*/*.md"]
+"requirements_architect.web" = ["static/*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

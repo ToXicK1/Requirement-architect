@@ -38,7 +38,7 @@ Statuses: NOT_STARTED, IN_PROGRESS, BLOCKED, IMPLEMENTED, TESTED, VERIFIED
 | P4-09 | Dependency vulnerability scan | M | PARTIAL | - | pip-audit run once: only sandbox `pip` flagged; not yet in CI |
 | P5-01 | Requirements schemas (Raw* model layer vs final layer) | H | TESTED | P4 | model cannot supply ids, approval state or needs_confirmation |
 | P5-02 | build_spec reconciler (ids, refs, cycles, assumptions, NFR targets) | H | TESTED | P5-01 | 11/11 mutants killed |
-| P5-03 | approve_nfr_targets (proposed -> user_approved) | H | TESTED | P5-02 | function only; approval API/UI is Phase 9 |
+| P5-03 | approve_nfr_targets (proposed -> user_approved) | H | TESTED | P5-02 | used by the approval flow (P9-03) |
 | P5-04 | Traceability: links, coverage, orphans, dangling, CSV export (+formula-injection guard) | H | TESTED | P5-01 | only objective/story links exist so far |
 | P5-05 | requirements prompt v1 + generate_requirements | H | TESTED | P5-02 | scripted LLM only; never run on a real model |
 | P5-06 | Workflow node (research -> requirements), retry, deps recorded | H | TESTED | P5-05 | node exists only when a ResearchService is supplied |
@@ -61,12 +61,23 @@ Statuses: NOT_STARTED, IN_PROGRESS, BLOCKED, IMPLEMENTED, TESTED, VERIFIED
 | P7-07 | DocumentationService (staged write, verify, versioned manifest, status) | H | TESTED | P7-05,P7-06 | |
 | P7-08 | Render Mermaid diagrams into the PDF | M | NOT_STARTED | P10 | needs a Mermaid renderer (mmdc/Chromium) in the image |
 | P7-09 | REQUIREMENTS_AUDIT.md and FINAL_READINESS_REPORT.md | H | TESTED | P8 | generated only from a current audit; otherwise declared pending (stale audits are not used) |
-| P7-10 | Expose generation/download through API and CLI | H | NOT_STARTED | P9 | service only, no endpoint yet |
+| P7-10 | Expose generation/download through API | H | TESTED | P9 | API only; the CLI has no generate command |
 | P8-01 | Audit schemas (findings, gates, tasks, rounds, verdict never 'approved') | H | TESTED | P7 | |
 | P8-02 | Deterministic checks: references, traceability, completeness, duplicates/cycles, diagram-vs-spec, security gaps, secrets, compliance claims, evidence, assumptions, ambiguity | H | TESTED | P8-01 | 23 tests; heuristics (vague words, role coverage) are noisy by design and only MINOR |
 | P8-03 | Quality gates + remediation tasks (auto vs human) | H | TESTED | P8-02 | thresholds configurable |
 | P8-04 | Independent LLM review (specs only, citations verified by code, severity capped, never auto-fixable) | H | TESTED | P8-02 | scripted LLM only; same-model blind spots unless a separate review gateway is configured |
 | P8-05 | Bounded remediation: regenerate design stages (never requirements) with audit feedback; round, no-progress and stage-run limits | H | TESTED | P8-03 | scripted LLM only; real models may not fix findings |
-| P8-06 | AuditService persists versioned report (stage 12 deps), status `audit_complete` | H | TESTED | P8-05 | service only; no endpoint until Phase 9 |
+| P8-06 | AuditService persists versioned report (stage 12 deps), status `audit_complete` | H | TESTED | P8-05 | API: POST/GET /audit (Phase 9) |
 | P8-07 | Audit documents in package; stale-audit detection | H | TESTED | P8-06,P7 | |
-| P8-08 | Audit as a LangGraph node / approval flow for human-owned findings | M | NOT_STARTED | P9 | |
+| P8-08 | Audit as a LangGraph node / approval flow for human-owned findings | M | PARTIAL | P9 | audit is an API step (ADR-049); human-owned findings have no approval flow | |
+| P9-01 | Users, sessions, approvals, activity log tables + migration | H | TESTED | P8 | migration verified on SQLite only |
+| P9-02 | scrypt passwords, session tokens (hash stored), login/IP rate limiting, generic failures | H | TESTED | P9-01 | limiter is in-process (ADR-042) |
+| P9-03 | ApprovalService: requests from specs + proposed NFR targets, fingerprinted append-only decisions, approve/reject/revision | H | TESTED | P9-01,P5-03 | revision quality unverified on a real model |
+| P9-04 | Approval state flows into DocInputs, status line and handoff table | H | TESTED | P9-03,P7 | |
+| P9-05 | FastAPI routes: auth, projects, workflow, outputs, audit, approvals, documents, activity | H | TESTED | P9-02 | scripted LLM only |
+| P9-06 | Owner-only access (404), background jobs, per-user generation limit, 503 without LLM | H | TESTED | P9-05 | jobs in memory (ADR-044) |
+| P9-07 | Safe downloads: manifest whitelist, traversal checks, text/plain, ZIP/PDF | H | TESTED | P9-05 | |
+| P9-08 | Security headers, CSP, no-store, request-size limit | H | TESTED | P9-05 | |
+| P9-09 | Static web UI (text-only rendering, strict CSP) | M | IMPLEMENTED | P9-05 | not browser-tested; JS syntax-checked and served only |
+| P9-10 | CLI: create-user (no password argument), serve | M | TESTED | P9-02 | |
+| P9-11 | Audit as graph node; multi-instance job queue; shared rate-limit store; Postgres checkpointer | M | NOT_STARTED | P10 | see ADR-042/044/048 |

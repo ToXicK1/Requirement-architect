@@ -90,22 +90,33 @@ class WorkflowService:
                 {"project_id": project.id, "problem_statement": project.problem_statement},
             )
 
+    @staticmethod
+    def _check_answers(snap: Snapshot, answers: Sequence[ClarificationAnswer]) -> None:
+        open_ids = {q["id"] for q in snap.open_questions}
+        ids = [a.question_id for a in answers]
+        if not answers:
+            raise AnswerValidationError("no answers supplied")
+        if len(ids) != len(set(ids)):
+            raise AnswerValidationError("duplicate question ids in answers")
+        unknown = set(ids) - open_ids
+        if unknown:
+            raise AnswerValidationError(f"answers for unknown/closed questions: {sorted(unknown)}")
+
+    async def validate_answers(
+        self, project_id: str, answers: Sequence[ClarificationAnswer]
+    ) -> None:
+        """Fail fast (before a long run is started in the background)."""
+        snap = await self.snapshot(project_id)
+        if snap.status != WorkflowStatus.AWAITING_CLARIFICATION.value:
+            raise WorkflowStateError(f"workflow is not awaiting answers (status={snap.status})")
+        self._check_answers(snap, answers)
+
     async def resume(self, project_id: str, answers: Sequence[ClarificationAnswer]) -> Snapshot:
         async with self._locks[project_id]:
             snap = await self.snapshot(project_id)
             if snap.status != WorkflowStatus.AWAITING_CLARIFICATION.value:
                 raise WorkflowStateError(f"workflow is not awaiting answers (status={snap.status})")
-            open_ids = {q["id"] for q in snap.open_questions}
-            ids = [a.question_id for a in answers]
-            if not answers:
-                raise AnswerValidationError("no answers supplied")
-            if len(ids) != len(set(ids)):
-                raise AnswerValidationError("duplicate question ids in answers")
-            unknown = set(ids) - open_ids
-            if unknown:
-                raise AnswerValidationError(
-                    f"answers for unknown/closed questions: {sorted(unknown)}"
-                )
+            self._check_answers(snap, answers)
             payload: Command[Any] = Command(
                 resume={"answers": [a.model_dump(mode="json") for a in answers]}
             )

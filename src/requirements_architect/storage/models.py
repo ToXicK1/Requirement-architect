@@ -89,3 +89,53 @@ class LLMUsageRow(Base):
     success: Mapped[bool] = mapped_column(Boolean, default=True)
     error_type: Mapped[str | None] = mapped_column(String(60), default=None)
     attempt: Mapped[int] = mapped_column(Integer, default=1)
+
+
+class User(Base):
+    __tablename__ = "users"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    username: Mapped[str] = mapped_column(String(40), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(300))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class SessionRow(Base):
+    """Server-side sessions: only the SHA-256 of the token is stored, so a database leak does
+    not leak usable tokens, and logout can revoke."""
+
+    __tablename__ = "sessions"
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class ApprovalRow(Base):
+    """Append-only human decisions. The latest row per (project, stage, ref) is current."""
+
+    __tablename__ = "approvals"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    project_id: Mapped[str] = mapped_column(
+        ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    stage_id: Mapped[str] = mapped_column(String(60))
+    ref: Mapped[str] = mapped_column(String(60))
+    fingerprint: Mapped[str] = mapped_column(String(64))  # of the decision as it was shown
+    decision: Mapped[str] = mapped_column(String(30))
+    note: Mapped[str] = mapped_column(Text, default="")
+    actor_id: Mapped[str] = mapped_column(String(36))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class AuditLogRow(Base):
+    """Who did what. Never stores secrets, passwords, tokens or problem-statement text."""
+
+    __tablename__ = "audit_log"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, index=True)
+    user_id: Mapped[str | None] = mapped_column(String(36), index=True, default=None)
+    project_id: Mapped[str | None] = mapped_column(String(36), index=True, default=None)
+    action: Mapped[str] = mapped_column(String(60))
+    detail: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)

@@ -58,3 +58,10 @@
 - Tests: 506 passed. ruff, ruff format, mypy strict (88 files) clean.
 - Mutation testing: 20 mutants; 3 survived first (builder-duplicate suppression, design-stage fixability filter, auto/human owner rule) -> tests added -> all killed.
 - NOT verified: any real-model behavior (does feedback actually make a model fix the output? does the reviewer find real defects or hallucinate?); false-positive rate of the heuristics on real specs; cost of a full remediation round (up to 6 LLM calls per round).
+
+## Session 9 - Phase 9 application interface
+- Built: users/sessions/approvals/activity tables + migration `30bd38d42546`; `core/security.py` (scrypt, tokens, RateLimiter); `storage/{accounts,approvals}.py`; `api/{auth,jobs,container,middleware,schemas,routes,app}.py`; `agent/approvals.py` (ApprovalService); approval state wired into `DocInputs`, the status line and the handoff table; `WorkflowService.validate_answers`; `Repository.list_projects/get_output_payload`; static UI under `web/static`; CLI (`create-user`, `serve`); settings `allow_registration`, `session_ttl_hours`, `checkpoint_path`.
+- Existing behaviour changed deliberately: package status text now says how many items are approved/rejected/sent back and that the package itself is not approved; the handoff table has a State column; `DocumentationService` takes an optional ApprovalService (without it every item is pending, as before).
+- Tests: 577 passed. ruff, ruff format, mypy strict (101 files), `alembic check` clean. Real server smoke test: created a user with the CLI, logged in over HTTP, created a project, got 503 for start without an LLM, UI served with CSP.
+- Mutation testing: 25 mutants; 5 survived first (latest-decision-wins, manifest whitelist, symlink containment, error-message hiding, declared-size shortcut) -> tests added -> all killed.
+- NOT verified: the UI in a real browser (JS only syntax-checked and fetched); any real-model run through the API; PostgreSQL; multi-worker behaviour (jobs, limits, locks are in-process); proxy/TLS deployment; accessibility with assistive technology.

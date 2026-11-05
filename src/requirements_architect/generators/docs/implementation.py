@@ -3,7 +3,8 @@ from __future__ import annotations
 from requirements_architect.generators.docs import md
 from requirements_architect.generators.docs.model import Doc, DocInputs
 from requirements_architect.generators.docs.tasks import PHASES, Plan
-from requirements_architect.schemas.requirements import Severity
+from requirements_architect.schemas.requirements import Severity, TargetStatus
+from requirements_architect.schemas.state import StageId
 
 
 def _all_issues(i: DocInputs) -> list[tuple[str, str, str, str]]:
@@ -23,11 +24,30 @@ def _all_issues(i: DocInputs) -> list[tuple[str, str, str, str]]:
     ]
 
 
-def _approvals(i: DocInputs) -> list[tuple[str, str, str, str]]:
+def _approvals(i: DocInputs) -> list[tuple[str, str, str, str, str]]:
     out = []
     for spec in (i.architecture, i.technology, i.data_api, i.security, i.ux, i.qa):
         for a in spec.approval_candidates:
-            out.append((a.source_stage, a.ref, a.decision, a.reason))
+            out.append(
+                (
+                    a.source_stage,
+                    a.ref,
+                    a.decision,
+                    a.reason,
+                    i.approval_state(a.source_stage, a.ref),
+                )
+            )
+    for n in i.requirements.nonfunctional:
+        if n.target_status is TargetStatus.PROPOSED and n.target:
+            out.append(
+                (
+                    StageId.REQUIREMENTS.value,
+                    n.id,
+                    f"Adopt target '{n.target}'",
+                    "proposed by the system, not stated by the user",
+                    i.approval_state(StageId.REQUIREMENTS.value, n.id),
+                )
+            )
     return out
 
 
@@ -226,8 +246,11 @@ def _handoff(i: DocInputs, plan: Plan) -> str:
             "12. Do not change without human approval",
             md.bullets(protected) or "None recorded.",
             md.section(
-                "Items still awaiting a human decision",
-                md.table(["Stage", "Reference", "Decision", "Reason"], approvals)
+                "Items needing a human decision",
+                "Only items marked `approved` have been decided by a human. Treat `pending`, "
+                "`rejected` and `revision_requested` items as NOT approved: do not build on them "
+                "without asking.",
+                md.table(["Stage", "Reference", "Decision", "Reason", "State"], approvals)
                 or "None recorded.",
                 level=3,
             ),

@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", pattern="^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$")
     database_url: str = "sqlite+aiosqlite:///./requirements_architect.db"
     secret_key: SecretStr = SecretStr("")
+    checkpoint_path: str = "./data/checkpoints.db"  # LangGraph state (SQLite; see ADR-041)
     output_dir: str = "./data/output"  # generated documentation packages are written here
 
     # --- LLM gateway (provider-independent; no default vendor model is assumed) ---
@@ -39,6 +40,10 @@ class Settings(BaseSettings):
     llm_max_concurrency: int = Field(default=4, ge=1, le=64)
     # JSON object: {"model-name": {"input_per_mtok": "3.0", "output_per_mtok": "15.0"}}
     llm_price_table_json: str = "{}"
+
+    # --- Access control ---
+    allow_registration: bool = False  # otherwise create users with the CLI
+    session_ttl_hours: int = Field(default=12, ge=1, le=24 * 30)
 
     # --- Audit (Stage 11): bounded so it can never regenerate endlessly ---
     audit_max_rounds: int = Field(default=2, ge=0, le=5)

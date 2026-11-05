@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 
 from pydantic import BaseModel
 from sqlalchemy import func, select, update
@@ -46,6 +47,42 @@ class Repository:
         if p is None:
             raise NotFoundError(project_id)
         return p
+
+    async def list_projects(self, owner_id: str) -> list[Project]:
+        async with self._factory() as s:
+            rows = await s.scalars(
+                select(Project)
+                .where(Project.owner_id == owner_id)
+                .order_by(Project.created_at.desc())
+                .limit(200)
+            )
+            return list(rows.all())
+
+    async def get_output_payload(
+        self, project_id: str, stage_id: StageId, version: int | None = None
+    ) -> tuple[OutputMeta, dict[str, Any]] | None:
+        """The stored JSON of one version (latest when version is None), without a model."""
+        async with self._factory() as s:
+            q = select(StageOutput).where(
+                StageOutput.project_id == project_id, StageOutput.stage_id == stage_id.value
+            )
+            q = (
+                q.where(StageOutput.version == version)
+                if version
+                else q.order_by(StageOutput.version.desc())
+            )
+            row = await s.scalar(q.limit(1))
+        if row is None:
+            return None
+        meta = OutputMeta(
+            project_id=row.project_id,
+            stage_id=stage_id,
+            version=row.version,
+            status=OutputStatus(row.status),
+            created_at=row.created_at,
+            depends_on=[Dependency.model_validate(d) for d in row.depends_on],
+        )
+        return meta, dict(row.payload)
 
     async def set_status(self, project_id: str, status: str) -> None:
         async with self._factory() as s, s.begin():

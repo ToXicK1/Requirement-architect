@@ -231,6 +231,7 @@ class Stack:
     service: WorkflowService
     script: Script
     gateway: LLMGateway
+    engine: Any = None
 
 
 @asynccontextmanager
@@ -261,5 +262,5 @@ async def make_stack(
     async with AsyncSqliteSaver.from_conn_string(str(tmp_path / "ckpt.db")) as saver:
         research = research_factory(repo, gateway) if research_factory else None
         graph = build_workflow(gateway, repo, saver, max_rounds=max_rounds, research=research)
-        yield Stack(repo, WorkflowService(graph, repo), script, gateway)
+        yield Stack(repo, WorkflowService(graph, repo), script, gateway, engine)
     await engine.dispose()

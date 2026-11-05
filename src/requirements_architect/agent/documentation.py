@@ -11,6 +11,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from requirements_architect.agent.approvals import ApprovalService
 from requirements_architect.generators.docs.bundle import (
     PDF_NAME,
     Manifest,
@@ -63,8 +64,11 @@ class GeneratedPackage:
 
 
 class DocumentationService:
-    def __init__(self, repo: Repository, output_dir: Path) -> None:
+    def __init__(
+        self, repo: Repository, output_dir: Path, approvals: ApprovalService | None = None
+    ) -> None:
         self._repo = repo
+        self._approvals = approvals
         self._out = output_dir
 
     async def _load(self, project_id: str) -> tuple[DocInputs, list[Dependency]]:
@@ -115,6 +119,14 @@ class DocumentationService:
             source_versions={d.stage_id.value: d.version for d in deps},
             audit=audit,
             audit_note=audit_note,
+            approval_states=(
+                {
+                    f"{st}/{ref}": state
+                    for (st, ref), state in (await self._approvals.states(project_id)).items()
+                }
+                if self._approvals
+                else {}
+            ),
         )
         return inputs, deps
 
