@@ -51,3 +51,48 @@ def raw_arch(**kw: Any) -> dict[str, Any]:
         "components": [raw_comp("C1")],
     }
     return base | kw
+
+
+def raw_tech(key: str = "T1", **kw: Any) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "key": key,
+        "name": f"Tech {key}",
+        "category": "backend",
+        "purpose": "p",
+        "reason": "r",
+        "alternatives": ["alt"],
+        "advantages": ["a"],
+        "disadvantages": ["d"],
+        "license": "MIT",
+        "component_ids": ["C-001"],
+    }
+    return base | kw
+
+
+def raw_entity(key: str = "E1", name: str = "users", **kw: Any) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "key": key,
+        "name": name,
+        "description": "d",
+        "fields": [
+            {"name": "id", "type": "uuid", "primary_key": True},
+            {"name": "email", "type": "text"},
+        ],
+        "requirement_ids": ["FR-001"],
+    }
+    return base | kw
+
+
+def raw_endpoint(key: str = "EP1", **kw: Any) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "key": key,
+        "method": "GET",
+        "path": "/users",
+        "purpose": "list users",
+        "authentication": "bearer",
+        "authorization": "admin only",
+        "error_responses": [{"status": 401, "meaning": "no token"}],
+        "requirement_ids": ["FR-001"],
+        "entity_keys": ["E1"],
+    }
+    return base | kw
