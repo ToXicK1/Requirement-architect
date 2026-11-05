@@ -122,6 +122,7 @@ class LLMGateway:
                 model=model,
                 prompt_id=request.prompt_id,
                 prompt_version=request.prompt_version,
+                project_id=request.project_id,
                 input_tokens=usage.input_tokens if usage else 0,
                 output_tokens=usage.output_tokens if usage else 0,
                 estimated_cost_usd=estimate_cost(model, usage, self._prices) if usage else None,

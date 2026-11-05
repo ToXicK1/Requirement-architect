@@ -20,6 +20,7 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from requirements_architect.core.config import get_settings
+from requirements_architect.storage import models  # noqa: F401  (register tables)
 from requirements_architect.storage.database import Base
 
 target_metadata = Base.metadata

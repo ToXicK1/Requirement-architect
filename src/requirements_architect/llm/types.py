@@ -22,6 +22,7 @@ class LLMRequest(BaseModel):
     temperature: float = Field(default=0.0, ge=0.0, le=2.0)
     prompt_id: str = "adhoc"
     prompt_version: str = "0"
+    project_id: str | None = None
 
 
 class Usage(BaseModel):

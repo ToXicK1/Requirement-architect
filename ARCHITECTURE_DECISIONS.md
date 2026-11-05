@@ -14,3 +14,14 @@ Master spec lists package folders as examples of modularity; the gateway is a di
 Models and prices change; the operator supplies LLM_MODEL and LLM_PRICE_TABLE_JSON. Unpriced calls are reported as unknown, not estimated.
 ## ADR-007: Fallback only on transient/rate-limit/timeout failures
 Permanent errors (auth, bad request) fail fast so misconfiguration is not hidden by silently switching vendors.
+
+## ADR-008: Stage outputs are append-only rows; latest draft is superseded, never overwritten
+Satisfies "approved requirements are versioned, not silently overwritten". Unique (project, stage, version) guards concurrent writers. Alternative: JSON blob per project (rejected: no history, lost-update risk).
+## ADR-009: Graph state holds plain dicts, not Pydantic objects
+Keeps checkpoints serializer-agnostic and resumable across code changes; models are re-validated at node boundaries.
+## ADR-010: Interrupt only in a side-effect-free `gate` node; resume payload validated in the service
+LangGraph re-runs an interrupted node from its start on resume, so LLM calls must not share a node with interrupt(). Validating before invoking avoids poisoning the checkpoint with a bad resume value.
+## ADR-011: LLM re-evaluation bounded by max_rounds; human input unbounded
+Prevents endless clarification loops (spec: no uncontrolled loops) without capping legitimate user interaction.
+## ADR-012: Model-reused question ids are renumbered rather than dropped (unless same text)
+Losing a genuine blocking question is worse than asking one extra.

@@ -11,3 +11,10 @@
 - Tests: 48 passed total (39 new). ruff + mypy strict clean.
 - Failure: one test expected specific timeout type after exhaustion; gateway intentionally raises aggregate error; test corrected (behavior unchanged).
 - Not verified: live API calls; prompt version *files* (loader comes with agent stages in P3); usage persistence.
+
+## Session 3 - Phase 3 core agent
+- Built: state schemas, ORM + first migration, repository, usage persistence sink, prompt loader + 2 prompts, stages 1-2, LangGraph workflow, WorkflowService.
+- Bugs found by tooling/tests: migration was empty (models not imported in env.py) -> fixed + `alembic check` test; mypy caught wrong argument order in service.start(); prompt files missing from wheel risk -> package-data + verified wheel contents.
+- Mutation check (5 mutants): 3 killed immediately; 1 revealed a real test gap (supersede status unasserted -> added); 1 revealed dead code (redundant skip-guard -> removed).
+- Tests: 75 passed. ruff + mypy strict clean.
+- NOT verified: real-LLM behaviour of prompts; PostgreSQL (DB + checkpointer); concurrent multi-process access (lock is per-process).

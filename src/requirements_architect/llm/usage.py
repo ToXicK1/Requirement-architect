@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from decimal import Decimal
 
+import structlog
 from pydantic import BaseModel, Field
+
+log = structlog.get_logger()
 
 
 class UsageRecord(BaseModel):
@@ -15,6 +19,7 @@ class UsageRecord(BaseModel):
     model: str
     prompt_id: str
     prompt_version: str
+    project_id: str | None = None
     input_tokens: int = 0
     output_tokens: int = 0
     estimated_cost_usd: Decimal | None = None
@@ -24,14 +29,25 @@ class UsageRecord(BaseModel):
     attempt: int = 1
 
 
+UsageSink = Callable[[UsageRecord], Awaitable[None]]
+
+
 class UsageTracker:
-    def __init__(self) -> None:
+    """In-memory ledger with an optional durable sink. A failing sink never breaks an LLM call."""
+
+    def __init__(self, sink: UsageSink | None = None) -> None:
         self._records: list[UsageRecord] = []
         self._lock = asyncio.Lock()
+        self._sink = sink
 
     async def record(self, rec: UsageRecord) -> None:
         async with self._lock:
             self._records.append(rec)
+        if self._sink is not None:
+            try:
+                await self._sink(rec)
+            except Exception:  # noqa: BLE001 - accounting must not take down the workflow
+                log.error("usage_sink_failed", provider=rec.provider, model=rec.model)
 
     @property
     def records(self) -> list[UsageRecord]:

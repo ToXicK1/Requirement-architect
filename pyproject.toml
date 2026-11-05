@@ -12,6 +12,8 @@ dependencies = [
   "alembic>=1.13",
   "aiosqlite>=0.20",
   "structlog>=24.1",
+  "langgraph>=1.0",
+  "langgraph-checkpoint-sqlite>=3.0",
 ]
 
 [project.optional-dependencies]
@@ -24,6 +26,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"requirements_architect.agent" = ["prompts/*/*.md"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
