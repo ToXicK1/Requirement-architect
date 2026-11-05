@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 from requirements_architect.schemas.state import ClarificationAnswer, WorkflowStatus
 from requirements_architect.storage.repository import Repository
+from requirements_architect.validation.secrets import scrub
 
 log = structlog.get_logger()
 
@@ -75,7 +76,12 @@ class WorkflowService:
             await self._graph.ainvoke(payload, self._cfg(project_id))
         except Exception as exc:
             await self._repo.set_status(project_id, WorkflowStatus.FAILED.value)
-            log.error("workflow_failed", project_id=project_id, error_type=type(exc).__name__)
+            log.error(
+                "workflow_failed",
+                project_id=project_id,
+                error_type=type(exc).__name__,
+                error=scrub(str(exc))[0][:300],
+            )
             raise
         return await self.snapshot(project_id)
 

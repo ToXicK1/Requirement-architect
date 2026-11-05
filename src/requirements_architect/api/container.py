@@ -27,6 +27,7 @@ from requirements_architect.core.config import Settings
 from requirements_architect.core.security import RateLimiter
 from requirements_architect.llm.factory import build_gateway
 from requirements_architect.llm.gateway import LLMGateway
+from requirements_architect.llm.types import LLMError
 from requirements_architect.research.factory import build_research_service
 from requirements_architect.storage.accounts import AccountRepository
 from requirements_architect.storage.approvals import ApprovalRepository
@@ -34,6 +35,7 @@ from requirements_architect.storage.database import make_engine, make_session_fa
 from requirements_architect.storage.repository import Repository
 
 DOMAIN_ERRORS: tuple[type[Exception], ...] = (
+    LLMError,  # messages are documented to never hold credentials or provider bodies
     ApprovalError,
     AnswerValidationError,
     AuditError,
