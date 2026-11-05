@@ -25,3 +25,16 @@ LangGraph re-runs an interrupted node from its start on resume, so LLM calls mus
 Prevents endless clarification loops (spec: no uncontrolled loops) without capping legitimate user interaction.
 ## ADR-012: Model-reused question ids are renumbered rather than dropped (unless same text)
 Losing a genuine blocking question is worse than asking one extra.
+
+## ADR-013: SSRF defence = validate + resolve ourselves + connect to the vetted IP
+Resolving once and connecting to that exact address (Host header + SNI preserved) closes the DNS-rebinding window between check and use. Every redirect hop is re-validated; any blocked address in a multi-record answer rejects the host. Alternatives: egress firewall only (necessary in production as defence in depth, but not verifiable here), hostname-only denylist (bypassable).
+## ADR-014: Registry/search adapters call fixed API hosts through a separate client from the page fetcher
+Only the fetcher handles arbitrary URLs, so only it needs SSRF machinery. LLM-supplied package names are strictly validated (fullmatch) before entering URL paths.
+## ADR-015: "verified" = quoted text found verbatim in a cited, retrieved source (>=25 chars)
+Deterministic and model-proof, but it proves the quote EXISTS, not that it entails the claim. Mitigations: recommendations/assumptions can never be verified; every report carries a disclaimer limitation; Stage 11 audit and human review remain responsible for semantic support. Alternative (LLM-judged entailment) rejected for Stage 3: the judge can be injected through the same sources.
+## ADR-016: Source reliability is a hostname heuristic from a small curated list, not a content judgement
+Look-alike hosts get no trust. Unlisted hosts are LOW. The list is deliberately short and must be reviewed/extended by maintainers.
+## ADR-017: Injection handling = contain + flag, not drop
+Retrieved text is delimited, tag-neutralized, invisible-char-stripped and flagged. Flagged sources are kept (security docs legitimately discuss injection). Output is schema-validated and quote-verified, so a successful injection cannot manufacture 'verified' facts. The regex flagger is a heuristic signal, not a boundary.
+## ADR-018: Research evidence stored as a versioned stage output (no new tables)
+Reuses append-only versioning; full page text is not persisted (hash + 2,000-char excerpt only) to limit storage and copyright exposure.

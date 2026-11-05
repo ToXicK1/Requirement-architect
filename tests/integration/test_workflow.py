@@ -44,7 +44,7 @@ async def test_blocking_questions_pause_then_resume_to_ready(tmp_path):
         assert snap.status == WorkflowStatus.READY_FOR_RESEARCH.value
         assert (await st.repo.get_answers(p.id))["Q-001"].answer == "EU only"
         assert await st.repo.list_versions(p.id, StageId.CLARIFICATION) == [1, 2]
-        assert script.calls == {"understand": 1, "clarify": 2}
+        assert (script.calls["understand"], script.calls["clarify"]) == (1, 2)
         # the answer must actually reach the model on the re-evaluation
         assert "EU only" in script.requests[-1].messages[0].content
 
@@ -118,7 +118,7 @@ async def test_retry_does_not_redo_completed_stage(tmp_path):
         with pytest.raises(LLMTransientError):
             await st.service.start(p.id)
         await st.service.retry(p.id)
-        assert script.calls == {"understand": 1, "clarify": 2}
+        assert (script.calls["understand"], script.calls["clarify"]) == (1, 2)
         assert await st.repo.list_versions(p.id, StageId.PROBLEM_UNDERSTANDING) == [1]
 
 

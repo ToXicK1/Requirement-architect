@@ -38,3 +38,17 @@ class FakeProvider:
             )
         finally:
             self.in_flight -= 1
+
+
+class FakeSearch:
+    """Test-only SearchProvider: returns canned hits, or raises, per call."""
+
+    def __init__(self, name: str, hits=None, error: Exception | None = None) -> None:
+        self.name, self._hits, self._error = name, hits or [], error
+        self.queries: list[str] = []
+
+    async def search(self, query: str, limit: int):
+        self.queries.append(query)
+        if self._error:
+            raise self._error
+        return list(self._hits)[:limit]

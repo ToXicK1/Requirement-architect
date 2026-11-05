@@ -21,6 +21,7 @@ from langgraph.types import interrupt
 from requirements_architect.agent.stages.clarification import run_clarification
 from requirements_architect.agent.stages.understanding import run_problem_understanding
 from requirements_architect.llm.gateway import LLMGateway
+from requirements_architect.research.service import ResearchService
 from requirements_architect.schemas.state import (
     ClarificationAnswer,
     ClarificationPlan,
@@ -44,6 +45,7 @@ class WorkflowState(TypedDict, total=False):
     open_questions: list[dict[str, Any]]  # blocking and unanswered
     round: int
     status: str
+    research_version: int
 
 
 def build_workflow(
@@ -51,6 +53,7 @@ def build_workflow(
     repo: Repository,
     checkpointer: BaseCheckpointSaver[Any],
     max_rounds: int = 2,
+    research: ResearchService | None = None,
 ) -> CompiledStateGraph[WorkflowState, None, WorkflowState, WorkflowState]:
     async def understand(state: WorkflowState) -> dict[str, Any]:
         pid = state["project_id"]
@@ -115,6 +118,25 @@ def build_workflow(
         await repo.set_status(state["project_id"], WorkflowStatus.READY_FOR_RESEARCH.value)
         return {"status": WorkflowStatus.READY_FOR_RESEARCH.value}
 
+    async def do_research(state: WorkflowState) -> dict[str, Any]:
+        assert research is not None
+        pid = state["project_id"]
+        project = await repo.get_project(pid)
+        answers = await repo.get_answers(pid)
+        versions = await repo.list_versions(pid, StageId.CLARIFICATION)
+        deps = [Dependency(stage_id=StageId.PROBLEM_UNDERSTANDING, version=state["brief_version"])]
+        if versions:
+            deps.append(Dependency(stage_id=StageId.CLARIFICATION, version=versions[-1]))
+        _, meta = await research.run(
+            pid,
+            project.problem_statement,
+            ProjectBrief.model_validate(state["brief"]),
+            answers,
+            deps,
+        )
+        await repo.set_status(pid, WorkflowStatus.RESEARCH_COMPLETE.value)
+        return {"status": WorkflowStatus.RESEARCH_COMPLETE.value, "research_version": meta.version}
+
     def after_clarify(state: WorkflowState) -> str:
         return "gate" if state.get("open_questions") else "finish"
 
@@ -134,7 +156,12 @@ def build_workflow(
     g.add_conditional_edges(
         "gate", after_gate, {"gate": "gate", "clarify": "clarify", "finish": "finish"}
     )
-    g.add_edge("finish", END)
+    if research is not None:
+        g.add_node("research", do_research)
+        g.add_edge("finish", "research")
+        g.add_edge("research", END)
+    else:
+        g.add_edge("finish", END)
     return g.compile(checkpointer=checkpointer)
 
 

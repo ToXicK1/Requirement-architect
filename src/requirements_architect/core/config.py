@@ -39,6 +39,15 @@ class Settings(BaseSettings):
     # JSON object: {"model-name": {"input_per_mtok": "3.0", "output_per_mtok": "15.0"}}
     llm_price_table_json: str = "{}"
 
+    # --- Research (Stage 3). All optional; absence is reported as a limitation, never faked. ---
+    research_enabled: bool = True
+    brave_api_key: SecretStr = SecretStr("")
+    github_token: SecretStr = SecretStr("")
+    research_allow_http: bool = False
+    research_max_fetches: int = Field(default=10, ge=0, le=50)
+    research_fetch_timeout_seconds: float = Field(default=15.0, gt=0, le=120)
+    research_fetch_max_bytes: int = Field(default=2_000_000, gt=0, le=20_000_000)
+
     @property
     def llm_configured(self) -> bool:
         return bool(self.llm_provider and self.llm_api_key.get_secret_value() and self.llm_model)

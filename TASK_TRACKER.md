@@ -27,4 +27,13 @@ Statuses: NOT_STARTED, IN_PROGRESS, BLOCKED, IMPLEMENTED, TESTED, VERIFIED
 | P3-07 | Workflow service (validation, per-project lock) | H | TESTED | P3-06 | lock is in-process only |
 | P3-08 | Postgres checkpointer | H | BLOCKED | P3-06 | needs PostgreSQL to verify; not installed |
 | P3-09 | Live end-to-end run with a real LLM | H | BLOCKED | P3-06,P2-07 | needs LLM key |
-| P4-* | Research adapters, SSRF-safe fetcher, evidence registry | H | NOT_STARTED | P3 | |
+| P4-01 | URL validator (scheme/port/userinfo/numeric-host/internal-name/DNS-resolved IP checks) | H | TESTED | P3 | 82 tests; real-resolver test for loopback encodings; 4/4 key mutants killed |
+| P4-02 | SafeFetcher (IP pinning+SNI, per-hop redirect revalidation, streaming decoded-size cap, wall-clock timeout, content-type allowlist, no cookies, per-host rate limit) | H | TESTED | P4-01 | 28 tests; 10/11 mutants killed (1 equivalent) |
+| P4-03 | Safe extraction + sanitization + injection flagging | H | TESTED | P4-02 | hidden-text, invisible-char, malformed-HTML cases |
+| P4-04 | Evidence model + deterministic verification + reliability heuristic | H | TESTED | P3 | model cannot self-verify; see ADR-015 for limits |
+| P4-05 | Provider adapters (Brave, GitHub, PyPI, npm, OSV) | H | TESTED | P4-04 | mocked HTTP only; NOT run against live services |
+| P4-06 | ResearchService (plan -> search -> fetch -> registries -> synthesize -> verify) | H | TESTED | P4-02..05 | scripted LLM; 16/16 mutants killed |
+| P4-07 | Workflow integration (research node, retry) | H | TESTED | P4-06 | |
+| P4-08 | Live research run (real search + real LLM) | H | BLOCKED | P4-06,P2-07 | needs LLM key (+ Brave key for web search) |
+| P4-09 | Dependency vulnerability scan | M | PARTIAL | - | pip-audit run once: only sandbox `pip` flagged; not yet in CI |
+| P5-* | Requirements engineering (FR/NFR, IDs, traceability) | H | NOT_STARTED | P4 | |

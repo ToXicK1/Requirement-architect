@@ -18,3 +18,11 @@
 - Mutation check (5 mutants): 3 killed immediately; 1 revealed a real test gap (supersede status unasserted -> added); 1 revealed dead code (redundant skip-guard -> removed).
 - Tests: 75 passed. ruff + mypy strict clean.
 - NOT verified: real-LLM behaviour of prompts; PostgreSQL (DB + checkpointer); concurrent multi-process access (lock is per-process).
+
+## Session 4 - Phase 4 research
+- Built: url_safety, fetcher, extract, evidence, providers (5 adapters), research service, factory, 2 prompts, workflow research node, config.
+- Real bugs found by tests/tools (all fixed): `head` in skip-list swallowed <title>; `$` regex accepted 'pkg\n' (-> fullmatch); npm scoped URL built with replace() hit 'https://' slash; Brave adapter crashed on `"web": []`; min quote length 12 too weak -> 25 (and prompt now asks for full-clause quotes).
+- Test-design errors fixed (not product bugs): exact-dict call assertion, provider-limit truncation, 1-char query violating schema, vacuous assertions removed.
+- Mutation testing: SSRF/fetcher 10/11 killed (1 equivalent: IPv4-mapped unwrap redundant on py3.12 -> kept as defence in depth); Stage 3 logic 16/16 killed.
+- Tests: 287 passed. ruff + mypy strict clean. pip-audit: only sandbox pip flagged.
+- NOT verified: any live network call (search, registries, OSV, GitHub); Brave response schema vs live API; real-model prompt quality; production egress controls; PG.
