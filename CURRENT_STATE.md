@@ -1,13 +1,12 @@
 # Current State
-- **Phase:** 1 (foundation) essentially complete; next Phase 2 (LLM gateway).
-- **Completed:** P1-01..P1-05 (TESTED). P1-06 Alembic wired, no migrations yet.
-- **Known issues / unverified:** Dockerfile and compose NOT built or run (no Docker). PostgreSQL/asyncpg path NOT exercised. Alembic only checked against SQLite.
+- **Phase:** 2 (LLM infrastructure) implemented and unit-tested; next Phase 3 (core agent).
+- **Completed:** P1-01..P1-05, P2-01..P2-06 (TESTED).
+- **Known issues / unverified:** Docker/compose never built (no Docker). PostgreSQL path unexercised. LLM adapters tested only against mocked HTTP; never called a live provider. Usage ledger is in-memory. LangGraph not yet installed.
 - **Resume:**
   ```
   cd requirements-architect && python3 -m venv .venv && . .venv/bin/activate
   pip install -e ".[dev]" && pytest -q && ruff check . && mypy src
-  uvicorn requirements_architect.main:app --reload
   ```
-- **Last verified results:** pytest 9 passed; ruff clean; mypy strict clean.
-- **External deps needed later:** LLM provider API key (Phase 2+), optional search API key (Phase 4), Docker/PostgreSQL host for production verification.
-- **Next actions:** Phase 2: provider-independent LLM gateway (interface, structured output, retries/timeouts, usage/cost tracking, fake provider for tests only).
+- **Last verified results:** pytest 48 passed; ruff clean; mypy strict clean (25 files).
+- **External deps needed:** LLM_PROVIDER/LLM_API_KEY/LLM_MODEL for live smoke test (P2-07) and for real project runs.
+- **Next actions:** Phase 3: Pydantic project-state models (versioned, stage-scoped outputs), ORM models + first Alembic migration, prompt loader with versioned prompt files, Stage 1 (problem understanding) and Stage 2 (clarification) nodes, LangGraph workflow with durable checkpointer and pause/resume.

@@ -23,8 +23,29 @@ def test_production_rejects_sqlite():
 
 
 def test_production_valid():
-    s = _mk(app_env="production", secret_key="x" * 40, database_url="postgresql+asyncpg://u:p@h/db")
-    assert s.app_env is AppEnv.PRODUCTION
+    s = _mk(
+        app_env="production",
+        secret_key="x" * 40,
+        database_url="postgresql+asyncpg://u:p@h/db",
+        llm_provider="anthropic",
+        llm_api_key="k",
+        llm_model="m",
+    )
+    assert s.app_env is AppEnv.PRODUCTION and s.llm_configured
+
+
+def test_production_requires_llm():
+    with pytest.raises(ValidationError):
+        _mk(app_env="production", secret_key="x" * 40, database_url="postgresql+asyncpg://u:p@h/db")
+
+
+def test_llm_provider_without_key_rejected():
+    with pytest.raises(ValidationError):
+        _mk(llm_provider="anthropic", llm_model="m")
+
+
+def test_api_key_not_in_repr():
+    assert "supersecret" not in repr(_mk(llm_api_key="supersecret"))
 
 
 def test_invalid_log_level_rejected():
