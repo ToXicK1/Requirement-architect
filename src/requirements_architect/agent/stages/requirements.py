@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 
 from requirements_architect.agent.prompt_loader import load_prompt, wrap_untrusted
+from requirements_architect.agent.stages.common import find_cycles as _find_cycles
 from requirements_architect.llm.gateway import LLMGateway
 from requirements_architect.llm.types import LLMRequest, Message
 from requirements_architect.schemas.requirements import (
@@ -51,30 +52,6 @@ def _issue(
             ref=ref,
         )
     )
-
-
-def _find_cycles(graph: Mapping[str, Sequence[str]]) -> list[list[str]]:
-    """Return one representative path for each cycle found by depth-first search."""
-    white, grey, black = 0, 1, 2
-    color = dict.fromkeys(graph, white)
-    stack: list[str] = []
-    cycles: list[list[str]] = []
-
-    def visit(node: str) -> None:
-        color[node] = grey
-        stack.append(node)
-        for nxt in graph[node]:
-            if color[nxt] == grey:
-                cycles.append([*stack[stack.index(nxt) :], nxt])
-            elif color[nxt] == white:
-                visit(nxt)
-        stack.pop()
-        color[node] = black
-
-    for n in graph:
-        if color[n] == white:
-            visit(n)
-    return cycles
 
 
 def build_spec(
